@@ -7,10 +7,9 @@ import java.util.*;
  * @param <T>
  */
 public class Database<T> implements Iterable<T> {
-	private HashMap<String, DataEntry> data;
-	
-	public Database(Integer size) {
-		data = new HashMap<>(size);
+	private TreeMap<String, DataEntry> data;
+	public Database() {
+		data = new TreeMap<>();
 	}
 	
 	/**
