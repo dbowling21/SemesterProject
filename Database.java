@@ -1,107 +1,171 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.util.*;
+import java.util.HashMap;
 
 /**
- * 
- * @param <T>
+ * Database class hold a collection of Table objects for relational operations, and a buffer for deleted entries.
+ * A private class class HistoryEntry is used to store the name, and entry. 
+ * TODO: also store which table the entry came from
  */
-public class Database<T> implements Iterable<T> {
-	private TreeMap<String, DataEntry> data;
+public class Database {
+	// Number of deleted entries to keep in the buffer.
+	public static final int MAX_HISTORY_ENTRIES = 400;
 	
-	/**
-	 * Instantiates a new TreeMap
-	 */
+	// Private class to facilitate holding on to deleted entry names and entries
+	private class HistoryEntry {
+		private String name;
+		private DataEntry entry;
+		
+		public HistoryEntry(String name, DataEntry table) {
+			this.name = name;
+			this.entry = table;
+		}
+	}
+	
+	// holds a set of tables for future relational operations between different tables
+	private HashMap<String, Table> tables;
+	
+	// holds an array of MAX_HISTORY_ENTRIES
+	private HistoryEntry[] oldEntries;
+	
+	// to reflect how many entries large the history buffer is.
+	private int bufferIndex;
+	
 	public Database() {
-		data = new TreeMap<>();
+		tables = new HashMap<>();
+		oldEntries = new HistoryEntry[MAX_HISTORY_ENTRIES];
+		bufferIndex = 0;
 	}
 	
 	/**
-	 * @param
-	 * @return the the previous DataEntry associated with productId, or null if there was no mapping for productId
-	 * . (A null return can also indicate that the map previously associated null with key.)
+	 * create a new table
+	 * @param name unique name of the table
+	 * @return true if the table name is not taken.
 	 */
-	public DataEntry create(String productId, DataEntry entry) {
-		DataEntry oldEntry = (data.put(entry.getProductId(), entry));
+	public boolean createTable(String name) {
+		if(!tables.containsKey(name)) {
+			Table newTable = new Table(name);
+			tables.put(name, newTable);
+			return true;
+		}
+		return false;
+	}
+	
+	/**
+	 * Creates a new entry in the specified table.
+	 * @param tableName name of an existing table.
+	 * @param entry The new DataEntry object to insert into the specified table.
+	 * @return null if the productId is not present in the specified Table. Otherwise, the old DataEntry object that was pushed out.
+	 */
+	public DataEntry createEntry(String tableName, DataEntry entry) {
+		DataEntry oldEntry = null;
+		if(tables.containsKey(tableName)) {
+			Table table = tables.get(tableName);
+			oldEntry = table.create(entry.getProductId(), entry);
+			dataToHistory(oldEntry);
+		}
 		return oldEntry;
 	}
 	
 	/**
-	 * @throws IllegalArgumentException if the file is not .csv
-	 * 
-	 * @throws FileNotFoundException if for some reason the file could not
-	 * be located
-	 * 
-	 * @param outputPath the directory in which to write the new .csv file
+	 * Selects and returns the string representation of an entire table
+	 * @param tableName name of an existing table.
+	 * @return string representation the table
+	 * @exception NullPointerException if the specified table does not exist.
 	 */
-	public File update(String outputPath) throws FileNotFoundException, IllegalArgumentException {
-		if(!outputPath.substring(outputPath.length() - 4).equals(".csv")) {
-			throw new IllegalArgumentException("The file name must end with \".csv\"");
+	public String readTable(String tableName) {
+		if(tables.containsKey(tableName)) {
+			return tables.get(tableName).toString();
 		}
-		File outputFile = new File(outputPath);
-		PrintWriter writer = new PrintWriter(outputFile);
-		writer.write(toString() + "\n");
-		return outputFile;
+		System.out.println("Error: The table " + tableName + " does not exist.");
+		throw new NullPointerException();
 	}
 	
 	/**
-	 * @param entry the entry to attempt to delete
-	 * @return true if the entry matches one in the map. False otherwise.   
+	 *  Selects and returns the string representation of the specified entry in the specified table.
+	 * @param tableName name of an existing table.
+	 * @param entryName  name of an existing entry in the specified table.
+	 * @return string representation the entry
 	 */
-	public boolean delete(DataEntry entry) {
-		if(data.containsKey(entry.getProductId())) {
-			return false;
+	public String readEntry(String tableName, String entryName) {
+		if(tables.containsKey(tableName)) {
+			Table table = tables.get(tableName);
+			return table.read(entryName).toReadableString();
 		}
-		data.remove(entry.getProductId());
-		return true;
+		System.out.println("Error: The table " + tableName + " does not exist.");
+		throw new NullPointerException();
 	}
 	
 	/**
-	 * @param id key of the entry to return.
-	 * @return null if the productID is not associated with a DataEntry.
+	 * Generates new .csv files for every table in the Database object.
+	 * @return an array of File objets to write to the disk.
+	 * @throws FileNotFoundException because IntelliJ said so.
 	 */
-	public DataEntry read(String id) {
-		return data.get(id);
-	}
-	
-	/**
-	 * @return the String representation of the underlying TreeMap
-	 */
-	@Override public String toString() {
-		StringBuilder s = new StringBuilder();
-		for(DataEntry entry: data.values()) {
-			s.append(entry).append("\n");
+	public File[] updateTables() throws FileNotFoundException {
+		File[] files = new File[tables.size()];
+		int i = 0;
+		for(Table table: tables.values()) {
+			files[i++] = table.update(table.getName() + ".csv");
 		}
-		s.setLength(s.length() - 1);
-		return s.toString();
+		return files;
+	}
+	
+
+/*	
+	not sure if we need this one...
+	
+	public File updateEntry(String tableName, String d) throws FileNotFoundException {
+		if(tables.containsKey(tableName)) {
+			Table table = tables.get(tableName);
+			return table.update(tableName);
+		}
+		System.out.println("Error: The table " + tableName + " does not exist.");
+		throw new NullPointerException();
+	}*/
+	
+	/**
+	 * Removes the specified table from the Database collection of Table objects if it exists.
+	 * @param tableName name of a specified table.
+	 * @return the table that was removed from the database, if it exists. Otherwise null.
+	 */
+	public Table deleteTable(String tableName) {
+		if(tables.containsKey(tableName)) {
+			Table table = tables.get(tableName);
+			tables.remove(tableName);
+			return table;
+		}
+		return null;
 	}
 	
 	/**
-	 * @return a TreeMap iterator for enhanced for loops
+	 *  Deletes the specified entry in the specified table.
+	 * @param tableName name of an existing table.
+	 * @param entryName  name of an existing entry in the specified table.
+	 * @return string representation the entry
+	 */	
+	public DataEntry deleteEntry(String tableName, String entryName) {
+		if(tables.containsKey(tableName)) {
+			Table table = tables.get(tableName);
+			DataEntry oldEntry = table.delete(entryName);
+			dataToHistory(oldEntry);
+			return oldEntry;
+		}
+		return null;
+	}
+	
+	/**
+	 * Stores removed data entries in a buffer, if there is capacity left.
+	 * @param oldEntry DataEntry object to be stored
+	 * @return true if the buffer had space to insert the old entry. Otherwise false.
 	 */
-	@Override public Iterator<T> iterator() {
-		return new Iterator<T>() {
-			Map.Entry<String, DataEntry> current;
-			final Iterator<Map.Entry<String, DataEntry>> iterator = data.entrySet().iterator();
-			
-			@Override public boolean hasNext() {
-				return iterator != null;
+	private boolean dataToHistory(DataEntry oldEntry) {
+		if(oldEntry != null) {
+			if(bufferIndex < MAX_HISTORY_ENTRIES) {
+				oldEntries[bufferIndex++] = new HistoryEntry(oldEntry.getProductId(),
+				 oldEntry);
 			}
-			
-			/**
-			 *
-			 * @param
-			 */
-			@Override public T next() {
-				Map.Entry<String, DataEntry> temp = iterator.next();
-				current = iterator.next();
-				return (T)temp;
-			}
-		};
+			return true;
+		}
+		return false;
 	}
-	
-	public int size() {
-		return data.size();
-	}
-} 
+}

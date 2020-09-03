@@ -15,7 +15,7 @@ public class DataEntry {
 	private Integer quantity;
 	private double wholesaleCost;
 	private double salePrice;
-	private final String supplierId;
+	private String supplierId;
 	
 	public DataEntry(
 	 String productId,
@@ -103,7 +103,7 @@ public class DataEntry {
 	}
 	
 	public void setSupplierId(String supplierId) {
-		supplierId = supplierId;
+		this.supplierId = supplierId;
 	}
 	
 	public String getProductId() {
@@ -122,9 +122,10 @@ public class DataEntry {
 		return productId.hashCode();
 	}
 	
+
 	/**
-	 * 
-	 * @param obj
+	 * Checks to see if another object has the same fild values as this one.
+	 * @param obj the object to compare for equality.
 	 * @return true if all fields of (DataEntry)obj equal this.
 	 */
 	@Override public boolean equals(Object obj) {
@@ -137,5 +138,14 @@ public class DataEntry {
 			 && this.getSupplierId().equals(de.getSupplierId());
 		}
 		return false;
+	}
+	
+	public String toReadableString() {
+		return "DataEntry{" +
+		 "    productId='" + productId + "\n" +
+		 "    quantity=" + quantity  + "\n" +
+		 "    wholesaleCost=" + wholesaleCost  + "\n" +
+		 "    salePrice=" + salePrice  + "\n" +
+		 "    supplierId='" + supplierId + "\n}";
 	}
 }
