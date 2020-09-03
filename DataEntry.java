@@ -1,4 +1,6 @@
-// The backup class for a pseudo-database
+/**
+ * Represents one single row from a csv file.
+ */
 public class DataEntry {
 	public static final int SUPPLIER_ID_LENGTH = 8;
 	public static final String BAD_SUPPLIER_ID_LENGTH =
@@ -12,14 +14,14 @@ public class DataEntry {
 	private String productId;
 	private Integer quantity;
 	private double wholesaleCost;
-	private float salePrice;
+	private double salePrice;
 	private final String supplierId;
 	
 	public DataEntry(
 	 String productId,
 	 Integer quantity,
 	 double wholesaleCost,
-	 float salePrice,
+	 double salePrice,
 	 String supplierId
 	) throws IllegalArgumentException {
 		if(productId.length() != 12
@@ -53,19 +55,31 @@ public class DataEntry {
 	}
 	
 	@Override public String toString() {
-		return "" + productId
-		 + quantity
-		 + wholesaleCost
-		 + salePrice
-		 + supplierId + "\n";
+		return "" + productId + ","
+		 + quantity + ","
+		 + wholesaleCost + ","
+		 + salePrice + ","
+		 + supplierId;
 	}
 	
+	/**
+	 * 
+	 * @return quantity
+	 */
 	public Integer getQuantity() {
 		return quantity;
 	}
 	
-	public void setquantity(Integer quantity) {
+	/**
+	 * @param quantity amount to update to.
+	 * @return true if the quantity changed. Otherwise false
+	 */
+	public boolean setquantity(Integer quantity) {
+		if(quantity < 0) {
+			return false;
+		}
 		this.quantity = quantity;
+		return true;
 	}
 	
 	public double getWholesaleCost() {
@@ -76,7 +90,7 @@ public class DataEntry {
 		this.wholesaleCost = wholesaleCost;
 	}
 	
-	public float getSalePrice() {
+	public double getSalePrice() {
 		return salePrice;
 	}
 	
@@ -100,17 +114,26 @@ public class DataEntry {
 		this.productId = productId;
 	}
 	
+	/**
+	 * 
+	 * @return a unique hashcode for insertion into the TreeMap.
+	 */
 	@Override public int hashCode() {
 		return productId.hashCode();
 	}
 	
+	/**
+	 * 
+	 * @param obj
+	 * @return true if all fields of (DataEntry)obj equal this.
+	 */
 	@Override public boolean equals(Object obj) {
 		if(obj instanceof DataEntry) {
 			DataEntry de = (DataEntry)obj;
 			return this.getProductId().equals(de.getProductId())
 			 && this.getSalePrice() == de.getSalePrice()
-			 && this.getQuantity() == de.getQuantity()
-			 && this.getWholesaleCost() == de.getWholesaleCost()
+			 && this.getQuantity().equals(de.getQuantity())
+			 && this.getWholesaleCost() == (de.getWholesaleCost())
 			 && this.getSupplierId().equals(de.getSupplierId());
 		}
 		return false;

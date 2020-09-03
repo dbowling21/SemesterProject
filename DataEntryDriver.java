@@ -3,11 +3,10 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public class DataEntryDriver {
-	//  the backup plan if we can't read the database going
 	private static final String FILE_NAME = "inventory_team4.csv";
 	public static Database database;
 	public static void main(String[] args) throws FileNotFoundException {
-		database = new Database(20000);
+		database = new Database();
 		Scanner scanner = new Scanner(new File(FILE_NAME));
 		scanner.nextLine();
 		while(scanner.hasNextLine()) {

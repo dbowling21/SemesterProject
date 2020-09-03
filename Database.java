@@ -4,11 +4,15 @@ import java.io.PrintWriter;
 import java.util.*;
 
 /**
+ * 
  * @param <T>
  */
 public class Database<T> implements Iterable<T> {
 	private TreeMap<String, DataEntry> data;
 	
+	/**
+	 * Instantiates a new TreeMap
+	 */
 	public Database() {
 		data = new TreeMap<>();
 	}
@@ -32,17 +36,19 @@ public class Database<T> implements Iterable<T> {
 	 * @param outputPath the directory in which to write the new .csv file
 	 */
 	public File update(String outputPath) throws FileNotFoundException, IllegalArgumentException {
-		if(!outputPath.substring(outputPath.length() - 3).equals(".csv")) {
+		if(!outputPath.substring(outputPath.length() - 4).equals(".csv")) {
 			throw new IllegalArgumentException("The file name must end with \".csv\"");
 		}
 		File outputFile = new File(outputPath);
 		PrintWriter writer = new PrintWriter(outputFile);
-		for(T dataEntry: this) {
-			writer.println(dataEntry);
-		}
+		writer.write(toString() + "\n");
 		return outputFile;
 	}
 	
+	/**
+	 * @param entry the entry to attempt to delete
+	 * @return true if the entry matches one in the map. False otherwise.   
+	 */
 	public boolean delete(DataEntry entry) {
 		if(data.containsKey(entry.getProductId())) {
 			return false;
@@ -52,18 +58,27 @@ public class Database<T> implements Iterable<T> {
 	}
 	
 	/**
-	 * @param
+	 * @param id key of the entry to return.
+	 * @return null if the productID is not associated with a DataEntry.
 	 */
 	public DataEntry read(String id) {
 		return data.get(id);
 	}
 	
+	/**
+	 * @return the String representation of the underlying TreeMap
+	 */
 	@Override public String toString() {
-		return data.toString();
+		StringBuilder s = new StringBuilder();
+		for(DataEntry entry: data.values()) {
+			s.append(entry).append("\n");
+		}
+		s.setLength(s.length() - 1);
+		return s.toString();
 	}
 	
 	/**
-	 * @param
+	 * @return a TreeMap iterator for enhanced for loops
 	 */
 	@Override public Iterator<T> iterator() {
 		return new Iterator<T>() {
@@ -84,5 +99,9 @@ public class Database<T> implements Iterable<T> {
 				return (T)temp;
 			}
 		};
+	}
+	
+	public int size() {
+		return data.size();
 	}
 } 
