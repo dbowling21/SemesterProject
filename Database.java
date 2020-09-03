@@ -8,25 +8,33 @@ import java.util.*;
  */
 public class Database<T> implements Iterable<T> {
 	private TreeMap<String, DataEntry> data;
+	
 	public Database() {
 		data = new TreeMap<>();
 	}
 	
 	/**
 	 * @param
+	 * @return the the previous DataEntry associated with productId, or null if there was no mapping for productId
+	 * . (A null return can also indicate that the map previously associated null with key.)
 	 */
-	public boolean create(String PRODUCT_ID, DataEntry entry) {
-		if(data.containsKey(entry.getProductId())) {
-			return false;
-		}
-		data.put(entry.getProductId(), entry);
-		return true;
+	public DataEntry create(String productId, DataEntry entry) {
+		DataEntry oldEntry = (data.put(entry.getProductId(), entry));
+		return oldEntry;
 	}
 	
 	/**
-	 * @param
+	 * @throws IllegalArgumentException if the file is not .csv
+	 * 
+	 * @throws FileNotFoundException if for some reason the file could not
+	 * be located
+	 * 
+	 * @param outputPath the directory in which to write the new .csv file
 	 */
-	public File update(String outputPath) throws FileNotFoundException {
+	public File update(String outputPath) throws FileNotFoundException, IllegalArgumentException {
+		if(!outputPath.substring(outputPath.length() - 3).equals(".csv")) {
+			throw new IllegalArgumentException("The file name must end with \".csv\"");
+		}
 		File outputFile = new File(outputPath);
 		PrintWriter writer = new PrintWriter(outputFile);
 		for(T dataEntry: this) {
