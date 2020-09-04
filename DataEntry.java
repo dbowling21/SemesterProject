@@ -140,6 +140,10 @@ public class DataEntry {
 		return false;
 	}
 	
+	/**
+	 *
+	 * @return a human-readable string representation of the DataEntry object
+	 */
 	public String toReadableString() {
 		return "DataEntry{" +
 		 "    productId='" + productId + "\n" +

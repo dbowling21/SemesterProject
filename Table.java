@@ -48,7 +48,7 @@ public class Table<T> implements Iterable<T> {
 	
 	/**
 	 * @param entry the entry to attempt to delete
-	 * @return true if the entry matches one in the map. False otherwise.
+	 * @return an entry if it was deleted. Otherwise null.
 	 */
 	public DataEntry delete(String entry) {
 		if(data.containsKey(entry)) {
@@ -57,6 +57,10 @@ public class Table<T> implements Iterable<T> {
 		DataEntry temp = data.get(entry);
 		data.remove(entry);
 		return temp;
+	}
+	
+	public DataEntry delete(DataEntry entry) {
+		return delete(entry.getProductId());
 	}
 	
 	/**
@@ -106,4 +110,4 @@ public class Table<T> implements Iterable<T> {
 	public String getName() {
 		return name;
 	}
-} 
+}
