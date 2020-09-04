@@ -1,4 +1,5 @@
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -33,7 +34,8 @@ class TableTest {
 	
 	//TODO: write some tests...
 	
-	@Test public void assertDataEntryEqualsTest() {
+	@Test
+	public void assertDataEntryEqualsTest() {
 		TABLE.create(entry1.getProductId(), entry1);
 		TABLE.create(entry2.getProductId(), entry2);
 		assertNotEquals(entry1, entry2);
