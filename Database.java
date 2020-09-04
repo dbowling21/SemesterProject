@@ -3,9 +3,9 @@ import java.io.FileNotFoundException;
 import java.util.HashMap;
 
 /**
- * Database class hold a collection of Table objects for relational operations, and a buffer for deleted entries.
+ * Database class holds a collection of Table objects for relational operations, and a buffer for deleted entries.
  * A private class class HistoryEntry is used to store the name, and entry. 
- * TODO: also store which table the entry came from
+ * TODO: also store which table each entry in the buffer came from
  */
 public class Database {
 	// Number of deleted entries to keep in the buffer.
