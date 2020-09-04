@@ -130,12 +130,12 @@ public class DataEntry {
 	 */
 	@Override public boolean equals(Object obj) {
 		if(obj instanceof DataEntry) {
-			DataEntry de = (DataEntry)obj;
-			return this.getProductId().equals(de.getProductId())
-			 && this.getSalePrice() == de.getSalePrice()
-			 && this.getQuantity().equals(de.getQuantity())
-			 && this.getWholesaleCost() == (de.getWholesaleCost())
-			 && this.getSupplierId().equals(de.getSupplierId());
+			DataEntry other = (DataEntry)obj;
+			return this.getProductId().equals(other.getProductId())
+			 && this.getSalePrice() == other.getSalePrice()
+			 && this.getQuantity().equals(other.getQuantity())
+			 && this.getWholesaleCost() == (other.getWholesaleCost())
+			 && this.getSupplierId().equals(other.getSupplierId());
 		}
 		return false;
 	}

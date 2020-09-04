@@ -34,7 +34,7 @@ class TableTest {
 	//TODO: write some tests...
 	
 	@Test public void assertDataEntryEqualsTest() {
-		TABLE.create(entry1.getProductId(), entry1);
+		TABLE.create(entry1.getProductId(), entry2);
 		TABLE.create(entry2.getProductId(), entry2);
 		assertNotEquals(entry1, entry2);
 		assertEquals(entry3, entry2);
