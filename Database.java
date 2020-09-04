@@ -146,16 +146,6 @@ public class Database {
 		return foundTables;
 	}
 
-	/*
-	 * not sure if we need this one...
-	 * 
-	 * public File updateEntry(String tableName, String d) throws
-	 * FileNotFoundException { if(tables.containsKey(tableName)) { Table table =
-	 * tables.get(tableName); return table.update(tableName); }
-	 * System.out.println("Error: The table " + tableName + " does not exist.");
-	 * throw new NullPointerException(); }
-	 */
-
 	/**
 	 * Removes the specified table from the Database collection of Table objects if
 	 * it exists.
