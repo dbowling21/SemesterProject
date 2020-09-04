@@ -1,4 +1,4 @@
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -39,6 +39,7 @@ class TableTest {
 		assertNotEquals(entry1, entry2);
 		assertEquals(entry3, entry2);
 	}
+	//fixme
 	
 	@Test public void assertDeltionTest() {
 		TABLE.create(entry2.getProductId(), entry1);
