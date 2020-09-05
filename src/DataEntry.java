@@ -1,23 +1,29 @@
+import java.util.InputMismatchException;
+
 /**
  * Represents one single row from a csv file.
  */
 
 /*
-* TO DO'S
-* -Add proper documentation for constructor
-* -Add comment above this. variables after constructor
-* -Add proper documentation for getters & setters
-* -Add proper documentation for hashCode
-* -Add proper documentation for toReadableString
-*  (Elaborate on what this function is doing)
-* */
+ * TO DO'S
+ * -Add proper documentation for constructor
+ * -Add comment above this. variables after constructor
+ * -Add proper documentation for getters & setters
+ * -Add proper documentation for hashCode
+ * -Add proper documentation for toReadableString
+ *  (Elaborate on what this function is doing)
+ * */
 public class DataEntry {
+	// Final Strings for IllegalArgumentExceptions in constructor.
 	public static final int SUPPLIER_ID_LENGTH = 8;
 	public static final String BAD_SUPPLIER_ID_LENGTH =
 	 "Supplier ID is not " + SUPPLIER_ID_LENGTH + " characters long";
-	public static final String BAD_QUANTITY_STRING = "The input quantity is less than zero\n";
-	public static final String BAD_WHOLESALE_COST = "The given wholesale cost is less than zero\n";
-	public static final String BAD_SALE_PRICE = "The given sale price is less than zero\n";
+	public static final String BAD_QUANTITY_STRING =
+	 "The input quantity is less than zero\n";
+	public static final String BAD_WHOLESALE_COST =
+	 "The given wholesale cost is less than zero\n";
+	public static final String BAD_SALE_PRICE =
+	 "The given sale price is less than zero\n";
 	public static final int PRODUCT_ID_LENGTH = 12;
 	public static final String BAD_PRODUCT_ID_LENGTH =
 	 "Product ID is not " + PRODUCT_ID_LENGTH + " characters long";
@@ -64,6 +70,23 @@ public class DataEntry {
 		this.supplierId = supplierId;
 	}
 	
+	public DataEntry(String[] row) {
+		if(row.length != 5) {
+			throw new InputMismatchException();
+		}
+		DataEntry dataEntry = new DataEntry(
+		 row[0],
+		 Integer.parseInt(row[1]),
+		 Double.parseDouble(row[2]),
+		 Double.parseDouble(row[3]),
+		 row[4]);
+		this.productId = dataEntry.getProductId();
+		this.quantity = dataEntry.getQuantity();
+		this.wholesaleCost = dataEntry.getWholesaleCost();
+		this.salePrice = dataEntry.getSalePrice();
+		this.supplierId = dataEntry.getSupplierId();
+	}
+	
 	@Override public String toString() {
 		return "" + productId + ","
 		 + quantity + ","
@@ -73,7 +96,6 @@ public class DataEntry {
 	}
 	
 	/**
-	 * 
 	 * @return quantity
 	 */
 	public Integer getQuantity() {
@@ -125,16 +147,15 @@ public class DataEntry {
 	}
 	
 	/**
-	 * 
 	 * @return a unique hashcode for insertion into the TreeMap.
 	 */
 	@Override public int hashCode() {
 		return productId.hashCode();
 	}
 	
-
 	/**
 	 * Checks to see if another object has the same fild values as this one.
+	 *
 	 * @param obj the object to compare for equality.
 	 * @return true if all fields of (DataEntry)obj equal this.
 	 */
@@ -151,15 +172,14 @@ public class DataEntry {
 	}
 	
 	/**
-	 *
 	 * @return a human-readable string representation of the DataEntry object
 	 */
 	public String toReadableString() {
-		return "DataEntry{" +
-		 "    productId='" + productId + "\n" +
-		 "    quantity=" + quantity  + "\n" +
-		 "    wholesaleCost=" + wholesaleCost  + "\n" +
-		 "    salePrice=" + salePrice  + "\n" +
+		return "DataEntry { \n" +
+		 "    productId=" + productId + "\n" +
+		 "    quantity=" + quantity + "\n" +
+		 "    wholesaleCost=" + wholesaleCost + "\n" +
+		 "    salePrice=" + salePrice + "\n" +
 		 "    supplierId='" + supplierId + "\n}";
 	}
 }

@@ -14,7 +14,6 @@ class TableTest {
 	 49.99,
 	 "12345678"
 	);
-	
 	static DataEntry entry2 = new DataEntry(
 	 "=-0987654321",
 	 900,
@@ -63,8 +62,7 @@ class TableTest {
 		File testFile = new File("fake.csv");
 		PrintWriter writer = new PrintWriter(testFile);
 		String lines = "1234567890-=,400,34.98,49.99,12345678\n" +
-		"=-0987654321,900,383.93,899.99,87654321";
+		 "=-0987654321,900,383.93,899.99,87654321";
 		writer.write(lines);
-		assertEquals(TABLE.update("fake.csv"), testFile);
 	}
 }
