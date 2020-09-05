@@ -1,6 +1,16 @@
 /**
  * Represents one single row from a csv file.
  */
+
+/*
+* TO DO'S
+* -Add proper documentation for constructor
+* -Add comment above this. variables after constructor
+* -Add proper documentation for getters & setters
+* -Add proper documentation for hashCode
+* -Add proper documentation for toReadableString
+*  (Elaborate on what this function is doing)
+* */
 public class DataEntry {
 	public static final int SUPPLIER_ID_LENGTH = 8;
 	public static final String BAD_SUPPLIER_ID_LENGTH =
