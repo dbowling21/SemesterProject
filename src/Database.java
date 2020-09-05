@@ -5,10 +5,26 @@ import java.util.HashMap;
 
 /**
  * Database class holds a collection of Table objects for relational operations,
- * and a buffer for deleted entries. A private class class HistoryEntry is used
+ * and a buffer for deleted entries. A private class HistoryEntry is used
  * to store the name, and entry. TODO: also store which table each entry in the
  * buffer came from
+ * To do above can be completed later.
  */
+
+/*
+* TO DO'S:
+* -Add all "End ..." comments to classes/ functions
+* -Be consistent with variable names in HistoryEntry
+* -Add catch for try, throw catch
+* -Use "productID" when referencing string variables for data entry objects
+* -Write accurate documentation for, "updateTable" & "updateTables"
+* -Rename above functions so confusion is avoided, ie "UpadateALLTables"
+* -Specify any or all data being returned from a function/ method
+*  (@return the table and all data)
+* -Change @ return name in deleteEntry to explicitly return the deleted data
+* (The functions does NOT return a string)
+* */
+
 public class Database {
 	// Number of deleted entries to keep in the buffer.
 	public static final int MAX_HISTORY_ENTRIES = 400;
@@ -17,6 +33,7 @@ public class Database {
 	private class HistoryEntry {
 		private String name;
 		private DataEntry entry;
+
 
 		public HistoryEntry(String name, DataEntry table) {
 			this.name = name;
