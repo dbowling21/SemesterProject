@@ -13,7 +13,7 @@ import java.util.InputMismatchException;
  * -Add proper documentation for toReadableString
  *  (Elaborate on what this function is doing)
  * */
-public class DataEntry {
+public class DataRow {
 	// Final Strings for IllegalArgumentExceptions in constructor.
 	public static final int SUPPLIER_ID_LENGTH = 8;
 	public static final String BAD_SUPPLIER_ID_LENGTH =
@@ -33,7 +33,7 @@ public class DataEntry {
 	private double salePrice;
 	private String supplierId;
 	
-	public DataEntry(
+	public DataRow(
 	 String productId,
 	 Integer quantity,
 	 double wholesaleCost,
@@ -70,11 +70,11 @@ public class DataEntry {
 		this.supplierId = supplierId;
 	}
 	
-	public DataEntry(String[] row) {
+	public DataRow(String[] row) {
 		if(row.length != 5) {
 			throw new InputMismatchException();
 		}
-		DataEntry dataEntry = new DataEntry(
+		DataRow dataEntry = new DataRow(
 		 row[0],
 		 Integer.parseInt(row[1]),
 		 Double.parseDouble(row[2]),
@@ -160,8 +160,8 @@ public class DataEntry {
 	 * @return true if all fields of (DataEntry)obj equal this.
 	 */
 	@Override public boolean equals(Object obj) {
-		if(obj instanceof DataEntry) {
-			DataEntry other = (DataEntry)obj;
+		if(obj instanceof DataRow) {
+			DataRow other = (DataRow)obj;
 			return this.getProductId().equals(other.getProductId())
 			 && this.getSalePrice() == other.getSalePrice()
 			 && this.getQuantity().equals(other.getQuantity())

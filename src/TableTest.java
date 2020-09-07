@@ -7,21 +7,21 @@ import java.io.PrintWriter;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TableTest {
-	static DataEntry entry1 = new DataEntry(
+	static DataRow entry1 = new DataRow(
 	 "1234567890-=",
 	 400,
 	 34.98,
 	 49.99,
 	 "12345678"
 	);
-	static DataEntry entry2 = new DataEntry(
+	static DataRow entry2 = new DataRow(
 	 "=-0987654321",
 	 900,
 	 383.93,
 	 899.99,
 	 "87654321"
 	);
-	static DataEntry entry3 = new DataEntry(
+	static DataRow entry3 = new DataRow(
 	 "=-0987654321",
 	 900,
 	 383.93,

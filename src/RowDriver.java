@@ -1,6 +1,6 @@
 import java.io.FileNotFoundException;
 
-public class DataEntryDriver {
+public class RowDriver {
 	private static final String FILE_NAME = "inventory_team4.csv";
 	public static Table table;
 	

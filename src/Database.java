@@ -56,10 +56,10 @@ public class Database {
 	
 	private class HistoryEntry {
 		private String productId;
-		private DataEntry entry;
+		private DataRow entry;
 		
 		// Todod: Be consistent with variable names in HistoryEntry
-		public HistoryEntry(String name, DataEntry entry) {
+		public HistoryEntry(String name, DataRow entry) {
 			this.productId = name;
 			this.entry = entry;
 		} // End HistoryEntry
@@ -120,8 +120,8 @@ public class Database {
 	 * @return null if the productId is not present in the specified Table.
 	 * Otherwise, the old DataEntry object that was pushed out.
 	 */
-	public DataEntry createEntry(String tableName, DataEntry entry) {
-		DataEntry oldEntry = null;
+	public DataRow createEntry(String tableName, DataRow entry) {
+		DataRow oldEntry = null;
 		if(tables.containsKey(tableName)) {
 			Table table = tables.get(tableName);
 			oldEntry = table.create(entry.getProductId(), entry);
@@ -202,7 +202,7 @@ public class Database {
 	 * @param entry the DataEntry to search for in all tables
 	 * @return an ArrayList of the tables that contain the specified entry
 	 */
-	public ArrayList<Table> find(DataEntry entry) {
+	public ArrayList<Table> find(DataRow entry) {
 		ArrayList<Table> foundTables = new ArrayList<>();
 		for(Table table: tables.values()) {
 			if(table.contains(entry)) {
@@ -240,10 +240,10 @@ public class Database {
 	 */
 	// Todod: -Change @ return name in deleteEntry to explicitly return the 
 	// deleted data
-	public DataEntry deleteEntry(String tableName, String entryName) {
+	public DataRow deleteEntry(String tableName, String entryName) {
 		if(tables.containsKey(tableName)) {
 			Table table = tables.get(tableName);
-			DataEntry oldEntry = table.delete(entryName);
+			DataRow oldEntry = table.delete(entryName);
 			dataToHistory(oldEntry);
 			return oldEntry;
 		} // End if
@@ -256,7 +256,7 @@ public class Database {
 	 * @param oldEntry DataEntry object to be stored
 	 *                 false.
 	 */
-	private void dataToHistory(DataEntry oldEntry) {
+	private void dataToHistory(DataRow oldEntry) {
 		if(oldEntry != null) {
 			oldEntries[bufferIndex++] =
 			 new HistoryEntry(oldEntry.getProductId(), oldEntry);

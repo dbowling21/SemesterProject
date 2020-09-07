@@ -4,16 +4,16 @@
  *  -Add description on what this "Table.java" file is doing
  *  -Add proper documentation for the Table class
  *  -Add proper documentation for Table constructor
- *  -Format "DataEntry create" and add a viable description for what this
+ *  -Format "Datarow create" and add a viable description for what this
  * function is doing
  *   (consider renaming this function to something more descriptive)
  *   (add @description at beginning)
- *  -Add proper documentation for all "DataEntry"'s
+ *  -Add proper documentation for all "Datarow"'s
  *   (is this a helper or reagular function or... )
  *   (add a description if not present)
  *   add documentation for helper method delete
  *   format helper method delete
- *  -Add ! on "if (data.containsKey(entry))" from delete method
+ *  -Add ! on "if (data.containsKey(row))" from delete method
  *  -Add proper documentation for "toString" method
  *  -Add proper documentation for "Iterator<T> iterator"
  *  -Add proper documentation for "size" and "get name"
@@ -29,7 +29,7 @@ import java.util.*;
  * @param <T>
  */
 public class Table<T> implements Iterable<T> {
-	private Hashtable<String, DataEntry> data;
+	private Hashtable<String, DataRow> data;
 	private String name;
 	
 	/**
@@ -71,7 +71,7 @@ public class Table<T> implements Iterable<T> {
 			double WHOLESALE_COST = Double.parseDouble(temp[2]);
 			double SALE_PRICE = Float.parseFloat(temp[3]);
 			String SUPPLIER_ID = temp[4];
-			create(PRODUCT_ID, new DataEntry(
+			create(PRODUCT_ID, new DataRow(
 			 PRODUCT_ID,
 			 QUANTITY,
 			 WHOLESALE_COST,
@@ -86,13 +86,13 @@ public class Table<T> implements Iterable<T> {
 	
 	/**
 	 * @param productId TODO: finish
-	 * @param entry     TODO: finish
-	 * @return the the previous DataEntry associated with productId, or null if
+	 * @param dataRow     TODO: finish
+	 * @return the the previous Datarow associated with productId, or null if
 	 * there was no mapping for productId . (A null return can also indicate
 	 * that the map previously associated null with key.)
 	 */
-	public DataEntry create(String productId, DataEntry entry) {
-		return (data.put(entry.getProductId(), entry));
+	public DataRow create(String productId, DataRow dataRow) {
+		return (data.put(dataRow.getProductId(), dataRow));
 	}
 	
 	/**
@@ -117,27 +117,27 @@ public class Table<T> implements Iterable<T> {
 	}
 	
 	/**
-	 * @param entry the entry to attempt to delete
-	 * @return an entry if it was deleted. Otherwise null.
+	 * @param row the row to attempt to delete
+	 * @return an row if it was deleted. Otherwise null.
 	 */
-	public DataEntry delete(String entry) {
-		if(data.containsKey(entry)) {
+	public DataRow delete(String row) {
+		if(data.containsKey(row)) {
 			return null;
 		}
-		DataEntry temp = data.get(entry);
-		data.remove(entry);
+		DataRow temp = data.get(row);
+		data.remove(row);
 		return temp;
 	}
 	
-	public DataEntry delete(DataEntry entry) {
-		return delete(entry.getProductId());
+	public DataRow delete(DataRow dataRow) {
+		return delete(dataRow.getProductId());
 	}
 	
 	/**
-	 * @param id key of the entry to return.
-	 * @return null if the productID is not associated with a DataEntry.
+	 * @param id key of the row to return.
+	 * @return null if the productID is not associated with a Datarow.
 	 */
-	public DataEntry read(String id) {
+	public DataRow read(String id) {
 		return data.get(id);
 	}
 	
@@ -150,8 +150,8 @@ public class Table<T> implements Iterable<T> {
 			return "";
 		} // End if
 		StringBuilder s = new StringBuilder();
-		for(DataEntry entry: data.values()) {
-			s.append(entry).append("\n");
+		for(DataRow dataRow : data.values()) {
+			s.append(dataRow).append("\n");
 		} // End for
 		s.setLength(s.length() - 1);
 		return s.toString();
@@ -163,9 +163,9 @@ public class Table<T> implements Iterable<T> {
 	@Override
 	public Iterator<T> iterator() {
 		return new Iterator<>() {
-			final Iterator<Map.Entry<String, DataEntry>> iterator =
+			final Iterator<Map.Entry<String, DataRow>> iterator =
 			 data.entrySet().iterator();
-			Map.Entry<String, DataEntry> current;
+			Map.Entry<String, DataRow> current;
 			
 			@Override
 			public boolean hasNext() {
@@ -174,7 +174,7 @@ public class Table<T> implements Iterable<T> {
 			
 			@Override
 			public T next(){
-				Map.Entry<String, DataEntry> temp = iterator.next();
+				Map.Entry<String, DataRow> temp = iterator.next();
 				current = iterator.next();
 				return (T)temp;
 			}
@@ -190,15 +190,15 @@ public class Table<T> implements Iterable<T> {
 	}
 	
 	/**
-	 * See if the table has an entry
+	 * See if the table has an row
 	 *
-	 * @param entry DataEntry that should be compared for equality
-	 * @return true if data has an equivalent entry. Otherwise false.
+	 * @param dataRow Datarow that should be compared for equality
+	 * @return true if data has an equivalent row. Otherwise false.
 	 */
-	public boolean contains(DataEntry entry) {
-		if(data.containsKey(entry.getProductId())) {
-			DataEntry matchedEntry = data.get(entry.getProductId());
-			return entry.equals(matchedEntry);
+	public boolean contains(DataRow dataRow) {
+		if(data.containsKey(dataRow.getProductId())) {
+			DataRow matchedrow = data.get(dataRow.getProductId());
+			return dataRow.equals(matchedrow);
 		}
 		return false;
 	}
