@@ -202,6 +202,14 @@ public class Table<T> implements Iterable<T> {
 		}
 		return false;
 	}
+
+	@Override public boolean equals(Object obj) {
+		if(obj instanceof Table) {
+			Table other = (Table)obj;
+			return this.data.equals(((Table<?>) obj).data);
+		}
+		return false;
+	}
 	
 	public void update(String fileName, Table table) throws FileNotFoundException {
 		table.update(fileName);

@@ -50,10 +50,14 @@ public class Database {
 	 * @param tableName table name to check
 	 * @return true if the name is taken. Otherwise, false
 	 */
-	private boolean contains(String tableName) {
+	boolean contains(String tableName) {
 		return tables.containsKey(tableName);
 	} // End contains
-	
+
+	public int size() {
+		return tables.size();
+	}
+
 	private class HistoryEntry {
 		private String productId;
 		private DataRow entry;
@@ -88,6 +92,7 @@ public class Database {
 		tables.put(tableName, newTable);
 		return oldTable;
 	} // End addTable
+
 
 	/**
 	 * Create a new table an empty Table, and call the other createTable(Table newTable)
