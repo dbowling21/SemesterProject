@@ -17,18 +17,9 @@ public class Connect {
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			conn = DriverManager.getConnection(url, USER, PASSWORD);
 			System.out.println("Database connection established");
-			
-			/**
-			 * this block of code is where create, read, update, and delete 
-			 * statements should be put together.
-			 *
-			 Statement stmt = conn.createStatement();
-			 String query1 = "update UpdateDemo set Name='Johnson' " + "where 
-			 id in(1,4)";
-			 stmt.executeUpdate(query1);
-			 System.out.println("Record has been updated in the table 
-			 successfully..................");
-			 */
+			Statement statement = conn.createStatement();
+			int result = createTable("inventory", conn);
+			String select = "SELECT * FROM inventory;";
 		}
 		catch(Exception e) {
 			e.printStackTrace();
@@ -42,5 +33,25 @@ public class Connect {
 				catch(Exception e) { /* ignore close errors */ }
 			}
 		}
+	}
+	
+	private static int deleteTable(String tableName, Connection conn) 
+	 throws SQLException {
+		return conn.createStatement().executeUpdate(
+		 "DROP TABLE IF EXISTS " + tableName
+		);
+	}
+	
+	private static int createTable(String tableName, Connection conn) 
+	 throws SQLException {
+		deleteTable(tableName, conn);
+		int result = conn.createStatement().executeUpdate(
+		 "CREATE TABLE " + tableName + " (idx int(16) NOT NULL AUTO_INCREMENT,product_id VARCHAR(16)," +
+		  "quantity int(8)," +
+		  "wholesale_cost decimal (13,2)," +
+		  "sale_price decimal (13,2)," +
+		  "supplier_id VARCHAR(16)," +
+		  "PRIMARY KEY (idx));");
+		return result;
 	}
 }
