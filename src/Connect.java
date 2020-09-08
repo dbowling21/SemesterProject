@@ -2,10 +2,10 @@ import java.net.*;
 import java.sql.*;
 
 public class Connect {
-	public static final String USER = "GalacticWafer";
-	public static final String PASSWORD = "|i&o?Zy2H3";
+	public static final String USER = "";
+	public static final String PASSWORD = "";
 	public static final String HOST_IP = "45.79.55.190";
-	public static String schema_name = "test";
+	public static final String SCHEMA_NAME = "cs3250_project";
 	public static final int PORT = 3306;
 	
 	public static void main(String[] args) {
@@ -13,7 +13,7 @@ public class Connect {
 		try {
 			InetAddress localhost = InetAddress.getLocalHost();
 			String url =
-			 "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + schema_name;
+			 "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + SCHEMA_NAME;
 			Class.forName("com.mysql.cj.jdbc.Driver");
 			conn = DriverManager.getConnection(url, USER, PASSWORD);
 			System.out.println("Database connection established");
