@@ -1,10 +1,11 @@
+import java.io.FileNotFoundException;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class Presentation1
 {
     private static final String FILE_NAME = "inventory_team4.csv";
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) throws FileNotFoundException {
         Database db = new Database();
 
 
