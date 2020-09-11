@@ -24,7 +24,7 @@ public class CustomerOrder {
     public static final String BAD_PRODUCT_ID_LENGTH =
             "Product ID is not " + PRODUCT_ID_LENGTH + " characters long";
 
-    public static final int DATE_LENGTH = 8;
+    public static final int DATE_LENGTH = 11;
     public static final String BAD_DATE =
             "Date exceeds " + DATE_LENGTH + " characters long";
 
@@ -65,6 +65,7 @@ public class CustomerOrder {
         this.quantity = quantity;
         this.email = email;
         this.shippingAddr = shippingAddr;
+        this.date = date;
     }
 
     public CustomerOrder(String[] row) {
