@@ -22,10 +22,18 @@ class CRUDBuddy {
 	private static Scanner scanner;
 	private static String[] headers;
 	
-	private static Pair<String, String> primaryKey = new Pair<>("idx", "int(16)");	
+	private static Pair<String, String> primaryKey = new Pair<>("idx", "int(16)");
 	
-	
-	
+	/**
+	 * Class that facilitates a connection to a database, and carries out CRUD operations
+	 * @param userName your github account name
+	 * @param passWord check your messages
+	 * @param hostIP check your messages
+	 * @param port 3306
+	 * @param schema the database that we are working in is "cs3250_project"
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 */
 	public CRUDBuddy(String userName, String passWord, String hostIP, String port, String schema) throws SQLException, ClassNotFoundException {
 		USER_NAME = userName;
 		PASSWORD = passWord;
@@ -33,21 +41,9 @@ class CRUDBuddy {
 		PORT = port;
 		DB_NAME = schema;
 		tables = new HashMap<>();
-		connection = createConnection(userName, passWord);
-	}
-	
-	
-	public Connection createConnection(String username, String password) throws ClassNotFoundException, SQLException {
 		Class.forName("com.mysql.cj.jdbc.Driver");
-		Connection conn = DriverManager.getConnection(getURL(), username, password);
+		connection = DriverManager.getConnection(getURL(), userName, passWord);
 		JOptionPane.showMessageDialog(null, "Connection OK with " + getURL());
-		return conn;
-	}
-	
-	
-	public void createRecord(Connection conn, String sql) throws SQLException {
-		Statement statement = conn.createStatement();
-		statement.executeUpdate(sql);
 	}
 	
 	
@@ -82,34 +78,50 @@ class CRUDBuddy {
 	public void createTable(String tableName, String[] headers, LinkedList<Integer> columnTypes) throws SQLException {
 		deleteTable(tableName);
 
-		String s =
+		String sql =
 		 "CREATE TABLE " + tableName + "(" + PRIMARY_KEY.getKey() + " " + PRIMARY_KEY.getValue() +
 		  " NOT NULL AUTO_INCREMENT,";
 
 		int i = 0;
 		Iterator<Integer> itr = columnTypes.iterator();
 		for(; itr.hasNext(); i++) {
-			s += headers[i] + " " + columnTypes.get(itr.next()) + ", ";
+			sql += headers[i] + " " + columnTypes.get(itr.next()) + ", ";
 		}
 
-		connection.createStatement()
-		 .executeUpdate(s + "PRIMARY KEY (" + PRIMARY_KEY.getKey() + "))" + ";");
+		connection.createStatement().executeUpdate(
+		 sql + "PRIMARY KEY (" + PRIMARY_KEY.getKey() + "))" + ";");
 	}
 	
-	
-	// get an arraylist of the column names of a specific table 
+	/**
+	 * Gets an arraylist of the column names of a specific table
+	 * 
+	 * @param dbName name of the desired database (shouldn't change for this project)
+	 * @param tableName name of the target table
+	 * @return Arraylist of Strings for all column names in the specified table.
+	 * @throws SQLException
+	 */
 	public ArrayList<String> readColumnNames(String dbName, String tableName) throws SQLException {
+		
 		String sql = "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE " +
 		  "`TABLE_SCHEMA`='" + dbName + "' AND `TABLE_NAME`='" + tableName + "';";
+		
 		ResultSet rs = connection.createStatement().executeQuery(sql);
+		
 		ArrayList<String> headers = new ArrayList<>();
+		
 		while(rs.next()) {
 			headers.add(rs.getString(1));
 		}
 		return headers;
 	}
 	
-	// get an arrayList of column types from a table
+	/**
+	 * Gets an arrayList of column types from a table
+	 * 
+	 * @param tableName name of the target table
+	 * @return
+	 * @throws SQLException
+	 */
 	public ResultSet getColumnTypes(String tableName) throws SQLException {
 		String sql = "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS " + 
   		 "WHERE table_name = " + tableName + " AND COLUMN_NAME = 'product_id'";
@@ -143,7 +155,7 @@ class CRUDBuddy {
 		String sql = 
 		 "SELECT " + arrayString.substring(1,arrayString.length() - 1) + 
 		 " FROM " + tableName + 
-		 " WHERE " + idColumnName + " = \'" + idValue + "\'";
+		 " WHERE " + idColumnName + " = '" + idValue + "'";
 		
 		ResultSet rs = connection.createStatement().executeQuery(sql);
 		HashMap<String, Object> objectMap = new HashMap<>();
@@ -156,7 +168,22 @@ class CRUDBuddy {
 		return objectMap;
 	}
 	
-	
+	/**
+	 * 
+	 * @param tableName Name of the table in which to update values
+	 * @param columnNames Array of strings for all columns to be updated
+	 * @param newValues The values to replace for every element in columnNames[] array
+	 * @param idValue The value to to be identified (most likely a product_id), but can be any 
+	 *                   information about the row that is desired)
+	 * @param idColumnName String name of the column of the identifying value
+	 * @param isString indicates which elements from <code>newValues</code> need to be wrapped in
+	 *                 in quotes. If newValues[i] is a represents SQL VARCHAR type, then 
+	 *                 isString[i] should be true. Otherwise, false.
+	 * @param idIsString indicates whether or not the row-identifying value is a should be 
+	 *                      wrapped in quotes, for the same reason as isString[] array.
+	 * @return returnIntegers for the feedback received from MySQL
+	 * @throws SQLException
+	 */
 	public int[] updateRow(String tableName, String[] columnNames, String[] newValues, String idValue,
 	 String idColumnName, boolean[] isString, boolean idIsString) throws SQLException {
 		
@@ -213,29 +240,56 @@ class CRUDBuddy {
 		return conn.createStatement().executeUpdate(sql);
 	}
 	
-	
-	public int deleteRecord(String table, String column, Object value) throws SQLException {
+	/**
+	 * Delete the row  in the specified table 
+	 * @param table 
+	 * @param idColumn
+	 * @param idValue
+	 * @return
+	 * @throws SQLException
+	 */
+	public int deleteRecord(String table, String idColumn, Object idValue) throws SQLException {
+		ArrayList<String> arrays = new ArrayList<>(); 
 		return connection.createStatement()
-		 .executeUpdate("DELETE FROM " + table + " WHERE " + column + " = " + value);
+		 .executeUpdate("DELETE FROM " + table + " WHERE " + idColumn + " = " + idValue);
 	}
 	
-	
-	public int deleteAllRecords(Connection conn, String table) throws SQLException {
-		return conn.createStatement().executeUpdate("DELETE FROM " + table);
+	/**
+	 * Deletes all records from a table, but the table remains
+	 * @param table to delete all records in
+	 * @return
+	 * @throws SQLException
+	 */
+	public int deleteAllRecords(String table) throws SQLException {
+		return connection.createStatement().executeUpdate("DELETE FROM " + table);
 	}
 	
-	
+	/**
+	 * deletes an entire table
+	 * @param tableName to be deleted
+	 * @return
+	 * @throws SQLException
+	 */
 	public static int deleteTable( String tableName) throws SQLException {
 		return connection.createStatement().executeUpdate("DROP TABLE IF EXISTS " + tableName);
 	}
 	
-	
+	/**
+	 * helper method to clean up code when concatenating commas for sql code.
+	 * @param length the length of the array to check against
+	 * @param i string to append to the end of a list of sql elements in a query. (usually a 
+	 *             parentheses or empty string).
+	 * @param endingCharacter the 
+	 * @return either a comma if there are more elements left to iterate through (as calculated 
+	 * by <code>length</code>, or the ending character 
+	 */
 	private static String getComma(int length, int i, String endingCharacter) {
 		if(i < length - 1) {
 			return ", ";
 		}
 		return endingCharacter + "";
 	}
+	
 	
 	
 	private static String formatValue(Object columnValue) {
@@ -245,7 +299,9 @@ class CRUDBuddy {
 		return columnValue.toString();
 	}
 	
-	
+	/**
+	 * @return the beginning of the  string for the url (without username and password) 
+	 */
 	private static String getURL() {
 		return "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + DB_NAME;
 	}
