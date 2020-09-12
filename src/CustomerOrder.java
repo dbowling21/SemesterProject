@@ -66,6 +66,7 @@ public class CustomerOrder {
         this.email = email;
         this.shippingAddr = shippingAddr;
         this.date = date;
+        Customer.add(getEmail());
     }
 
     public CustomerOrder(String[] row) {
@@ -86,10 +87,10 @@ public class CustomerOrder {
     }
 
     @Override public String toString() {
-        return "" + productId + ","
-                + quantity + ","
-                + email + ","
-                + shippingAddr + ","
+        return "" + productId + ", "
+                + quantity + ", "
+                + email + ", "
+                + shippingAddr + ", "
                 + date;
     }
 
