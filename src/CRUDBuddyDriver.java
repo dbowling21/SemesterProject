@@ -29,7 +29,7 @@ public class CRUDBuddyDriver {
 		System.out.println(results.toString());
 		
 		// new values to updateRow
-		String[] newValues = {"888", "999.99", "7777.77"};
+		String[] newValues = {"4444", "289.56", "458.99"};
 		
 		// because "product_id" is a string, but this may not be the thing we identify in every case
 		boolean idIsString = true;
