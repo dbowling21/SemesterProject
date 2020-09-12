@@ -33,7 +33,7 @@ public class CustomerOrder {
     private Integer quantity;
     private String email;
     private String shippingAddr;
-    private String date;
+    private Date date;
 
 
     public CustomerOrder(
@@ -41,6 +41,7 @@ public class CustomerOrder {
             Integer quantity,
             String email,
             String shippingAddr,
+            // TODO: change date to Date class
             String date
     ) throws IllegalArgumentException {
         if (productId.length() != 12
@@ -110,8 +111,16 @@ public class CustomerOrder {
         return shippingAddr;
     }
 
+    public String setShippingAddr(String newAddress) {
+        shippingAddr = newAddress;
+    }
+    
     public String getDate() {
         return date;
+    }
+    
+    public void setDate(Date date) {
+        this.date = date;
     }
 }
 
