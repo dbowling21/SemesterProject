@@ -706,7 +706,7 @@ class CRUDBuddy {
 	 * helper method to clean up code when concatenating commas for sql code.
 	 *
 	 * @param length   the length of the array to check against
-	 * @param start    string to append to the end of a list of sql elements
+	 * @param lastChar    string to append to the end of a list of sql elements
 	 *                 in a query.
 	 *                 (usually a
 	 *                 parentheses or empty string).
