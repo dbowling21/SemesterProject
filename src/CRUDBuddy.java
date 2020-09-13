@@ -1,4 +1,6 @@
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.*;
@@ -46,7 +48,20 @@ class CRUDBuddy {
 		JOptionPane.showMessageDialog(null, "Connection OK with " + getURL());
 	}
 	
-	
+	public int createTable(String tableName, String[] headers, HashMap<Integer, String> typeMap) throws SQLException {
+		deleteTable(tableName);
+		
+		String s =
+		 "CREATE TABLE " + tableName + "(" + PRIMARY_KEY.getKey() + " " + PRIMARY_KEY.getValue() +
+		  " NOT NULL AUTO_INCREMENT,";
+		
+		for(int i = 0; i < typeMap.size(); i++) {
+			s += headers[i] + " " + typeMap.get(i) + ", ";
+		}
+		
+		return connection.createStatement()
+		 .executeUpdate(s + "PRIMARY KEY (" + PRIMARY_KEY.getKey() + "))" + ";");
+	}
 	/**
 	 * Specify a table name and array of column names, along with a HashMap indicating the data
 	 * type for each column.  Use the constants included at the bottom of this class to specify
@@ -237,6 +252,247 @@ class CRUDBuddy {
 		return conn.createStatement().executeUpdate(sql);
 	}
 	
+	
+	
+	private long[] batchLoadTable(String tableName, String[] headers, String fileName) throws SQLException, ClassNotFoundException, FileNotFoundException {
+		long[] count = null;
+		Statement statement = connection.createStatement();
+		if(typeMap != null) {
+			createTable(tableName, headers, typeMap);
+			String s = "INSERT INTO " + tableName + " " + getHeaders(headers) + ")VALUES";
+			Scanner scanner = new Scanner(new File(fileName));
+			StringBuilder sql = new StringBuilder().append(s);
+			scanner.nextLine();
+			int MAX_LOOPS = 100000;
+			for(int i = 1; i < MAX_LOOPS && scanner.hasNextLine(); i++) {
+				String insertionString = getInsertionString(scanner.nextLine().split(","));
+				sql.append(insertionString).append(i == MAX_LOOPS - 1?";":",");
+				if(i == MAX_LOOPS - 1) {
+					statement.executeUpdate(sql.toString());
+					System.out.println(i);
+					i = 0;
+					sql.setLength(0);
+					sql.append(s);
+				}
+			}
+			sql.replace(sql.length() - 1, sql.length(), ";");
+			statement.executeUpdate(sql.toString());
+			scanner.close();
+			JOptionPane.showMessageDialog(null,
+			 "The csv file has been exported to " + tableName + " in the " + DB_NAME + "database.");
+		}
+		return count;
+	}
+	private JFrame uploadTableGUI(String[] headers) {
+		GridBagConstraints constraints = new GridBagConstraints();
+		GridBagLayout layout = new GridBagLayout();
+		
+		JFrame frame = new JFrame();
+		JScrollPane scrollPane= new JScrollPane();
+		JPanel panel = new JPanel(layout);
+		
+		Object[] boxOptions = J_TO_SQL.values().toArray();
+		
+		JRadioButton[] radioButtons = new JRadioButton[headers.length + 1];
+		JLabel primaryColumnLabel = new JLabel("Primary Column:");
+		
+		JComboBox[] boxes = new JComboBox[headers.length];
+		JLabel[] labels = new JLabel[headers.length];
+		
+		JLabel nameLabel = new JLabel("Table Name:");
+		JTextField nameField = new JTextField();
+		nameField.setColumns(20);
+		
+		JTextField fileField = new JTextField();
+		JLabel fileLabel = new JLabel("Table Name:");
+		fileField.setColumns(30);
+		
+		constraints.gridx = 0;
+		panel.add(nameLabel, constraints);
+		constraints.gridx = 1;
+		constraints.gridx = 3;
+		panel.add(primaryColumnLabel, constraints);
+		constraints.gridx = 1;
+		constraints.gridwidth = 2;
+		panel.add(nameField, constraints);
+		constraints.gridwidth = 1;
+		ButtonGroup buttonGroup = new ButtonGroup();
+		int i = 0;
+		for(; i < boxes.length; i++) {
+			constraints.gridy = i + 1;
+			constraints.gridx = 0;
+			
+			labels[i] = new JLabel(headers[i]);
+			panel.add(labels[i], constraints);
+			
+			constraints.gridx = 1;
+			
+			boxes[i] = new JComboBox(boxOptions);
+			boxes[i].setEditable(true);
+			boxes[i].setSelectedItem("VARCHAR(16)");
+			panel.add(boxes[i], constraints);
+			
+			constraints.gridx = 3;
+			
+			radioButtons[i] = new JRadioButton("", false);
+			buttonGroup.add(radioButtons[i]);
+			panel.add(radioButtons[i], constraints);
+		}
+		
+		radioButtons[i] = new JRadioButton("Add index column", true);
+		buttonGroup.add(radioButtons[i]);
+		constraints.gridy = i + 1;
+		panel.add(radioButtons[i], constraints);
+		
+		JButton ok = new JButton("Ok");
+		ok.addActionListener(new ActionListener() {
+			/**
+			 * Invoked when an action occurs.
+			 *
+			 * @param e the event to be processed
+			 */
+			@Override public void actionPerformed(ActionEvent e) {
+				if(nameField.getText().length() > 0 /*&& fileField.getText().length() > 0*/) {
+					//Todo: create fileField to get fileName
+					
+					String tableName = nameField.getText();
+					String fileName = fileField.getText();
+					Enumeration<AbstractButton> bs = buttonGroup.getElements();
+					boolean foundButton = false;
+					for(int j = 0; j < radioButtons.length - 1; j++) {
+						JRadioButton radioButton = (JRadioButton)bs.nextElement();
+						if(radioButton.isSelected() && bs.hasMoreElements()) {
+							PRIMARY_KEY.setValue(J_TO_SQL.get(j));
+							foundButton = true;
+						}
+					}
+					if(!foundButton) {
+						PRIMARY_KEY.setValue("idx");
+						PRIMARY_KEY.setValue("int(16)");
+					}
+					typeMap = new HashMap<>();
+					for(int j = 0; j < boxes.length; j++) {
+						typeMap.put(j, boxes[j].getSelectedItem() + "");
+					}
+					try {
+						batchLoadTable(tableName, headers, "inventory_team4.csv");
+					}
+					catch(SQLException | ClassNotFoundException | FileNotFoundException throwables) {
+						throwables.printStackTrace();
+					}
+					frame.setVisible(false);
+				}
+			}
+		});
+		constraints.gridx = 0;
+		constraints.gridy = i + 1;
+		panel.add(ok, constraints);
+		constraints.gridx = 1;
+		JButton cancel = new JButton("Cancel");
+		Dimension dim = frame.getContentPane().getPreferredSize();
+		scrollPane.setMaximumSize(new Dimension(dim.width - 1, dim.height - 1));
+		cancel.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) {
+				frame.remove(panel);
+				frame.setVisible(false);
+			}
+		});
+		panel.add(cancel, constraints);
+		scrollPane.getViewport().add(panel);
+		frame.getContentPane().add(scrollPane);
+		int sizeW = panel.getPreferredSize().width + 50;
+		int sizeH = panel.getPreferredSize().height + 50;
+		frame.setSize(new Dimension(sizeW, sizeH));
+		frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
+		return frame;
+	}
+	/**
+	 * Formats the String to be sent as sql code
+	 * <p>
+	 * insert the
+	 * new row into
+	 *
+	 * @param array the values of each column
+	 *              type of
+	 *              data each column is
+	 * @return sql String query to execute
+	 */
+	private static String getInsertionString(String[] array) {
+		
+		Object[] values = new Object[array.length];
+		String s = "(";
+		for(int i = 0; i < values.length; i++) {
+			if(typeMap.get(i).contains("CHAR")) {
+				array[i] = "'" + array[i] + "'";
+			}
+			s += array[i] + (i == values.length - 1?")":",");
+		}
+		return s;
+	}
+	
+	/**
+	 * Formats the String to be sent as sql code
+	 *
+	 * @param tableName Name of the table to insert the
+	 *                  new row into
+	 * @param headers   the headers of each column
+	 * @param array     the values of each column
+	 * @param typeMap   the map describing which
+	 *                  type of
+	 *                  data each column is
+	 * @return sql String query to execute
+	 */
+	private static String getInsertionString(String tableName, String[] headers, String[] array,
+	 HashMap<Integer, Integer> typeMap) {
+		Object[] values = new Object[array.length];
+		for(int i = 0; i < typeMap.size(); i++) {
+			values[i] = formatValue(array[i]);
+		}
+		String s = "INSERT INTO " + tableName + getHeaders(headers) + ") VALUES (";
+		for(int i = 0; i < values.length; i++) {
+			s += getComma(values.length - 1, i, ")");
+		}
+		return s;
+	}
+		/**
+	 * create the tuple of headers as a String to be sent
+	 * as sql code
+	 *
+	 * @return the column titles, comma separated, in
+	 * parentheses
+	 * i.e., (c1, c2,...cn)
+	 */
+	private static String getHeaders(String[] columnNames) {
+		String headers = "(";
+		for(String s: columnNames) {
+			headers += s + ",";
+		}
+		return headers.substring(0, headers.length() - 1);
+	}
+	public void loadTable(String fileName) {
+		try {
+			loadRemoteTable(fileName);
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+		private void loadRemoteTable(String filePath) throws Exception {
+		int[] count = null;
+		if(!filePath.endsWith(".csv")) {
+			//Todo: throw new FileNotSupportedException
+			return;
+		}
+		Scanner scanner = new Scanner(new File(filePath));
+		String[] headers = scanner.nextLine().split(",");
+		uploadTableGUI(headers);
+	}
+	
+	
+	
+	
+	
 	/**
 	 * Delete the row  in the specified table
 	 *
@@ -274,6 +530,7 @@ class CRUDBuddy {
 		return connection.createStatement().executeUpdate("DROP TABLE IF EXISTS " + tableName);
 	}
 	
+	
 	/**
 	 * helper method to clean up code when concatenating commas for sql code.
 	 *
@@ -309,30 +566,6 @@ class CRUDBuddy {
 	 */
 	private static String getURL() {
 		return "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + DB_NAME;
-	}
-	
-	
-	/**
-	 * Formats the String to be sent as sql code
-	 * <p>
-	 * insert the
-	 * new row into
-	 *
-	 * @param array the values of each column
-	 *              type of
-	 *              data each column is
-	 * @return sql String query to execute
-	 */
-	private static String getInsertionString(String[] array) {
-		Object[] values = new Object[array.length];
-		String s = "";
-		for(int i = 0; i < values.length; i++) {
-			if(typeMap.get(i).contains("CHAR")) {
-				array[i] = "'" + array[i] + "'";
-			}
-			s += array[i] + (i == values.length - 1?")":",");
-		}
-		return s;
 	}
 	
 	

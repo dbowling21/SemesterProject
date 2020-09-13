@@ -11,15 +11,63 @@ import java.util.*;
 class CRUDBuddyTest extends JPanel {
 	JTable table;
 	JScrollPane scrollPane;
-	@Test public void assertGuiIsOk() throws SQLException,
-	 ClassNotFoundException {
+	static String userName = "GalacticWafer";
+	static String password = "7!qaJ|B[t$";
+	static String ipAddress = "45.79.55.190";
+	static String portNumber = "3306";
+	static String databaseName = "cs3250_project";
+	static String tableName = "wtf_hammad_make_it_work";
+	
+	@Test void assertReadAndUpdate() throws SQLException, ClassNotFoundException {
+		// Login info
 		String userName = "GalacticWafer";
 		String password = "7!qaJ|B[t$";
 		String ipAddress = "45.79.55.190";
 		String portNumber = "3306";
+		
+		// Metadata for database access
 		String databaseName = "cs3250_project";
 		String tableName = "wtf_hammad_make_it_work";
 		
+		// row identity information
+		String identifierColumn = "product_id";
+		String identifierValue = "ZRDATK9CSM23";
+		
+		// A few of the column names to make sure we can updateRow their values
+		String[] columnNames = {"quantity", "wholesale_cost", "sale_price"};
+		
+		// CRUDBuddy instance variable
+		CRUDBuddy crud = new CRUDBuddy(userName, password, ipAddress, portNumber, databaseName);
+		
+		// 
+		HashMap<String, Object> results =
+		 crud.readColumnValues(tableName, columnNames, identifierValue, identifierColumn);
+		System.out.println(results.toString());
+		
+		// new values to updateRow
+		String[] newValues = {"4444", "289.56", "458.99"};
+		
+		// because "product_id" is a string, but this may not be the thing we identify in every 
+		// case
+		boolean idIsString = true;
+		
+		// array indicating if the same index in newValues above, is a String
+		boolean[] valueIsString = {false, false, false};
+		
+		int[] ints = crud
+		 .updateRow(tableName, columnNames, newValues, identifierValue, identifierColumn,
+		  valueIsString, idIsString);
+		System.out.println("After updateRow: " +
+		 crud.readColumnValues(tableName, columnNames, identifierValue, identifierColumn)
+		  .toString());
+	}
+	
+	@Test void assertUploadTableGuiIsOk() throws SQLException, ClassNotFoundException {
+		CRUDBuddy crud = new CRUDBuddy(userName, password, ipAddress, portNumber, databaseName);
+		crud.loadTable("inventory_team4.csv");
+	}
+	
+	@Test public void assertTableViewerGiuIsOk() throws SQLException, ClassNotFoundException {
 		CRUDBuddy crud = new CRUDBuddy(userName, password, ipAddress, portNumber, databaseName);
 		ArrayList<String> temp = crud.readColumnNames(databaseName, tableName);
 		String columnNames = (temp + "").substring(1, (temp + "").length() - 1);
@@ -69,14 +117,13 @@ class CRUDBuddyTest extends JPanel {
 	}
 	
 	public static void main(String[] args) throws SQLException, ClassNotFoundException {
-		JFrame jf = new JFrame(); 
+		JFrame jf = new JFrame();
 		
 		CRUDBuddyTest t = new CRUDBuddyTest();
-		t.assertGuiIsOk();
+		t.assertTableViewerGiuIsOk();
 		jf.setTitle("Test");
 		Dimension onlySize = new Dimension(
-		 t.scrollPane.getPreferredSize().width + 50,
-		 t.scrollPane.getPreferredSize().height + 50);
+		 t.scrollPane.getPreferredSize().width + 50, t.scrollPane.getPreferredSize().height + 50);
 		jf.setMinimumSize(onlySize);
 		jf.setMaximumSize(onlySize);
 		jf.setVisible(true);
