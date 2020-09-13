@@ -25,7 +25,8 @@ class CRUDBuddy {
 	private static Pair<String, String> primaryKey = new Pair<>("idx", "int(16)");
 	
 	/**
-	 * Class that facilitates a connection to a database, and carries out CRUD operations
+	 * Class that facilitates a connection to a database, and carries out CRUD
+	 * operations
 	 *
 	 * @param userName your github account name
 	 * @param passWord check your messages
@@ -35,7 +36,13 @@ class CRUDBuddy {
 	 * @throws SQLException
 	 * @throws ClassNotFoundException
 	 */
-	public CRUDBuddy(String userName, String passWord, String hostIP, String port, String schema) throws SQLException, ClassNotFoundException {
+	public CRUDBuddy(String userName,
+					 String passWord,
+					 String hostIP,
+					 String port,
+					 String schema)
+	throws SQLException, ClassNotFoundException {
+		
 		USER_NAME = userName;
 		PASSWORD = passWord;
 		HOST_IP = hostIP;
@@ -47,7 +54,20 @@ class CRUDBuddy {
 		JOptionPane.showMessageDialog(null, "Connection OK with " + getURL());
 	}
 	
-	public int createTable(String tableName, String[] headers, HashMap<Integer, String> typeMap) throws SQLException {
+	/**
+	 * Creates a blank Table
+	 * @param tableName name of the table.
+	 * @param headers String[] of tables.
+	 * @param typeMap HashMap where each index in <code>headers</code> has the 
+	 *                   string representation of its data type as the value
+	 * @return either (1) the row count for SQL Data Manipulation Language (DML) 
+	 * statements or (2) 0 for SQL statements that return nothing
+	 * @throws SQLException if a database access error occurs
+	 */
+	public int createBlankTable(String tableName,
+								String[] headers,
+								HashMap<Integer, String> typeMap)
+	throws SQLException {
 		
 		deleteTable(tableName);
 		StringFormat sb = new StringFormat(
@@ -55,17 +75,19 @@ class CRUDBuddy {
 		 tableName, PRIMARY_KEY.getKey(), PRIMARY_KEY.getValue());
 		
 		for(int i = 0; i < typeMap.size(); i++) {
-			sb.appendf(String.format("%s %s,", 
-			 headers[i], typeMap.get(i)));
+			sb.appendf(String.format("%s %s,",
+									 headers[i], typeMap.get(i)));
 		}
 		sb.appendf(" PRIMARY KEY (%s));", PRIMARY_KEY.getKey());
 		return connection.createStatement()
-		 .executeUpdate(sb.toString());
+						 .executeUpdate(sb.toString());
 	}
-
+	
 	/**
-	 * Specify a table name and array of column names, along with a HashMap indicating the data
-	 * type for each column.  Use the constants included at the bottom of this class to specify
+	 * Specify a table name and array of column names, along with a HashMap
+	 * indicating the data
+	 * type for each column.  Use the constants included at the bottom of this
+	 * class to specify
 	 * the string representation of MySQL's equivalent data type. For example,
 	 * the following are all true:
 	 * <p>
@@ -82,16 +104,21 @@ class CRUDBuddy {
 	 * columnTypes.add(STRING);
 	 * columnTypes.add(BOOLEAN);
 	 * columnTypes.add(DOUBLE);
-	 * String[] columnNames = new String[]{"my_int", "my_string", "my_bool", "my_dubs"}
+	 * String[] columnNames = new String[]{"my_int", "my_string", "my_bool",
+	 * "my_dubs"}
 	 * <p>
-	 * createTable("table_x", columnNames, columnTypes)
+	 * createBlankTable("table_x", columnNames, columnTypes)
 	 * <p>
 	 * //////////!!!!!!!!!!!!!!!!!!!!!!!!!\\\\\\\\\\\\
 	 * ADD CONSTANTS TO 'columnTypes' IN THE SAME ORDER
 	 * AS THE ARRAY 'columnNames' SO THEY MATCH UP!!!
 	 * //////////!!!!!!!!!!!!!!!!!!!!!!!!!\\\\\\\\\\\\
 	 */
-	public void createTable(String tableName, String[] headers, LinkedList<Integer> columnTypes) throws SQLException {
+	public void createBlankTable(String tableName,
+								 String[] headers,
+								 LinkedList<Integer> columnTypes)
+	throws SQLException {
+		
 		deleteTable(tableName);
 		
 		StringFormat sf = new StringFormat(
@@ -112,16 +139,19 @@ class CRUDBuddy {
 	/**
 	 * Gets an arraylist of the column names of a specific table
 	 *
-	 * @param dbName    name of the desired database (shouldn't change for this project)
+	 * @param dbName    name of the desired database (shouldn't change for this
+	 *                  project)
 	 * @param tableName name of the target table
 	 * @return Arraylist of Strings for all column names in the specified table.
 	 * @throws SQLException
 	 */
-	public ArrayList<String> readColumnNames(String dbName, String tableName) throws SQLException {
+	public ArrayList<String> readColumnNames(String dbName,
+											 String tableName)
+	throws SQLException {
 		
 		StringFormat sf = new StringFormat(
 		 "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS`" +
-		 " WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'",dbName, tableName);
+		 " WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'", dbName, tableName);
 		
 		ResultSet rs = connection.createStatement().executeQuery(sf.toString());
 		
@@ -132,6 +162,7 @@ class CRUDBuddy {
 		}
 		return headers;
 	}
+	
 	/**
 	 * Gets an arrayList of column types from a table
 	 *
@@ -139,34 +170,44 @@ class CRUDBuddy {
 	 * @return
 	 * @throws SQLException
 	 */
-	public ResultSet readColumnTypes(String tableName) throws SQLException {
+	public ResultSet readColumnTypes(String tableName)
+	throws SQLException {
+		
 		StringFormat sf = new StringFormat(
-		 "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = %s AND " +
-		  "COLUMN_NAME = 'product_id'", tableName);
+		 "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = %s " +
+		 "AND COLUMN_NAME = 'product_id'", tableName);
 		return connection.createStatement().executeQuery(sf.toString());
 	}
 	
 	/**
-	 * Queries a table for the specified criteria. The key is a column name (String), and the value
+	 * Queries a table for the specified criteria. The key is a column name
+	 * (String), and the value
 	 * is the value from that cell in the table.
 	 *
 	 * @param tableName    the name of the table to query.
 	 * @param columnNames  array of column names to query.
 	 * @param idColumnName the column name of the target record.
 	 * @param idValue      the unique value for the target record.
-	 * @return null if the columnNames array is null or empty. Otherwise, a Hashmap of results
-	 * (HashMap<String, Object>). Each String is a column header, and each value is an Object of
+	 * @return null if the columnNames array is null or empty. Otherwise, a Hashmap
+	 * of results
+	 * (HashMap<String, Object>). Each String is a column header, and each value is
+	 * an Object of
 	 * whichever type is associated with the column.
 	 * @throws SQLException
 	 */
-	public HashMap<String, Object> readColumnValues(String tableName, String[] columnNames,
-	 String idValue, String idColumnName) throws SQLException {
+	public HashMap<String, Object> readColumnValues(String tableName,
+													String[] columnNames,
+													String idValue,
+													String idColumnName)
+	throws SQLException {
+		
 		if(columnNames.length == 0) {
 			return null;
 		}
 		
-		StringFormat sf = new StringFormat("SELECT %s FROM %s WHERE %s = '%s'", 
-		 arrayToCSV(columnNames), tableName, idColumnName, idValue);
+		StringFormat sf = new StringFormat("SELECT %s FROM %s WHERE %s = '%s'",
+										   arrayToCSV(columnNames), tableName,
+										   idColumnName, idValue);
 		
 		ResultSet rs = connection.createStatement().executeQuery(sf.toString());
 		
@@ -180,7 +221,14 @@ class CRUDBuddy {
 		return objectMap;
 	}
 	
+	/**
+	 * creates a .csv-compatible line from an array of Strings
+	 *
+	 * @param array the array to convert to a .csv format (typically column names)
+	 * @return the .csv line for <code>array</code>
+	 */
 	public String arrayToCSV(String[] array) {
+		
 		String a = Arrays.toString(array);
 		return a.substring(1, a.length() - 1);
 	}
@@ -188,23 +236,33 @@ class CRUDBuddy {
 	/**
 	 * @param tableName    Name of the table in which to update values
 	 * @param columnNames  Array of strings for all columns to be updated
-	 * @param newValues    The values to replace for every element in columnNames[] array
-	 * @param idValue      The value to to be identified (most likely a product_id), but can be any
+	 * @param newValues    The values to replace for every element in columnNames[]
+	 *                     array
+	 * @param idValue      The value to to be identified (most likely a product_id)
+	 *                     , but can be any
 	 *                     information about the row that is desired)
 	 * @param idColumnName String name of the column of the identifying value
-	 * @param isString     indicates which elements from <code>newValues</code> need to be 
-	 *                        wrapped in
-	 *                     in quotes. If newValues[i] is a represents SQL VARCHAR type, then
+	 * @param isString     indicates which elements from <code>newValues</code>
+	 *                     need to be
+	 *                     wrapped in
+	 *                     in quotes. If newValues[i] is a represents SQL VARCHAR
+	 *                     type, then
 	 *                     isString[i] should be true. Otherwise, false.
-	 * @param idIsString   indicates whether or not the row-identifying value is a should be
-	 *                     wrapped in quotes, for the same reason as isString[] array.
+	 * @param idIsString   indicates whether or not the row-identifying value is a
+	 *                     should be
+	 *                     wrapped in quotes, for the same reason as isString[]
+	 *                     array.
 	 * @return returnIntegers for the feedback received from MySQL
 	 * @throws SQLException
 	 */
-	public int[] updateRow(String tableName, String[] columnNames, 
-	 String[] newValues, String idValue,
-	 String idColumnName, boolean[] isString,
-	 boolean idIsString) throws SQLException {
+	public int[] updateRow(String tableName,
+						   String[] columnNames,
+						   String[] newValues,
+						   String idValue,
+						   String idColumnName,
+						   boolean[] isString,
+						   boolean idIsString)
+	throws SQLException {
 		
 		idValue = quoteWrap(idValue, idIsString);
 		int[] returnIntegers = new int[columnNames.length];
@@ -212,66 +270,89 @@ class CRUDBuddy {
 		for(int i = 0; i < newValues.length; i++) {
 			String newValue = quoteWrap(newValues[i], isString[i]);
 			
-			String sql = String.format("UPDATE %s SET %s = %s WHERE %s = %s;", 
-			 tableName, columnNames[i], newValue, idColumnName, idValue);
+			String sql = String.format("UPDATE %s SET %s = %s WHERE %s = %s;",
+									   tableName, columnNames[i], newValue,
+									   idColumnName, idValue);
 			
 			returnIntegers[i] = connection.createStatement().executeUpdate(sql);
 		}
 		return returnIntegers;
 	}
 	
-	public String quoteWrap(String value, boolean valueIsString) {
-		if(valueIsString) {
-			return "'" + value + "'";
-		}
-		return value;
-	}
-	
 	/**
-	 * @param columnNames  to update
-	 * @param columnValues to be assigned
-	 * @param id           value
+	 * update a record with new information
+	 *
+	 * @param columns   The String[] of columns in the specified record to update
+	 * @param values    The Object[] of new values to be assigned to column names.
+	 *                  <code>columnNames</code> and <code>values</code> should be
+	 *                  the same length
+	 * @param id        Object whose value indicates the correct rowvalue
 	 * @param tableName
 	 * @param conn
 	 * @return
 	 * @throws SQLException
 	 */
-	public Object updateRow(String[] columnNames, Object[] columnValues, Object id,
-	 String tableName, Connection conn) throws SQLException {
+	public Object updateRow(String[] columns,
+							Object[] values,
+							Object id,
+							String tableName,
+							Connection conn)
+	throws SQLException {
 		
 		StringFormat sf = new StringFormat("UPDATE %s SET ", tableName);
 		
-		for(int i = 0; i < columnNames.length; i++) {
-			sf.appendf("%s = %s%s", columnNames[i], 
-			 formatValue(columnValues[i]), getComma(columnNames.length, i, ""));
+		for(int i = 0; i < columns.length; i++) {
+			String column = columns[i];
+			String value = quoteWrap(values[i]);
+			String comma = getComma(columns.length, i, "");
+			
+			sf.appendf("%s = %s%s", column, value, comma);
 		}
-		sf.appendf(" where %s=%s",PRIMARY_KEY, formatValue(id));
+		
+		String idx = quoteWrap(id);
+		sf.appendf(" where %s=%s", PRIMARY_KEY, idx);
+		
 		return conn.createStatement().executeUpdate(sf + "");
 	}
 	
-	
-	
-	private long[] batchLoadTable(String tableName, String[] headers, String fileName,
-	 Scanner scanner) throws SQLException {
+	/**
+	 * @param tableName name of the table
+	 * @param columns   name of all the table's columns
+	 * @param fileName  name of the file
+	 * @param scanner   scanner passed in to read each record of the .csv file
+	 * @throws SQLException
+	 */
+	//TODO: actually use the fileName
+	private boolean upLoadTable(String tableName,
+								String[] columns,
+								String fileName,
+								Scanner scanner)
+	throws SQLException {
 		
-		long[] count = null;
 		Statement statement = connection.createStatement();
 		if(typeMap != null) {
-			createTable(tableName, headers, typeMap);
+			createBlankTable(tableName, columns, typeMap);
 			
 			StringFormat sf = new StringFormat("INSERT INTO %s %s)VALUES"
-			 ,tableName, getHeaderTuple(headers));
+			 , tableName, getHeaderTuple(columns));
 			String sqlDeclaration = sf.toString();
 			
 			scanner.nextLine();
 			int MAX_LOOPS = 100000;
+			
 			for(int i = 1; i < MAX_LOOPS && scanner.hasNextLine(); i++) {
+				
 				String[] line = scanner.nextLine().split(",");
 				String nextInsertion = getInsertionString(line);
 				boolean isLastIteration = i == MAX_LOOPS - 1;
-				String lastChar = getLastChar(isLastIteration, ";", ",");
+				sf.append(nextInsertion);
 				
-				sf.append(nextInsertion).append(lastChar);
+				if(i == MAX_LOOPS - 1) {
+					sf.append(";");
+				}
+				else {
+					sf.append(",");
+				}
 				
 				if(isLastIteration) {
 					statement.executeUpdate(sf.toString());
@@ -280,36 +361,52 @@ class CRUDBuddy {
 					sf.append(sqlDeclaration);
 				}
 			}
+			
 			sf.replace(sf.length() - 1, sf.length(), ";");
 			statement.executeUpdate(sf.toString());
 			scanner.close();
+			
 			JOptionPane.showMessageDialog(null, String.format(
-			 "The csv file has been exported to %sqlDeclaration in the %sqlDeclaration database.",
+			 "The csv file has been exported to %s in the %s database.",
 			 tableName, DB_NAME));
+			return true;
 		}
-		return count;
+		return false;
 	}
-	private JFrame uploadTableGUI(String[] headers, Scanner scanner) {
+	
+	/**
+	 * Creates a gui to get user input on a new table to be uploaded to MySQL
+	 * database.
+	 *
+	 * @param columns String[] of column names to be used, from the first line of
+	 *                a .csv file
+	 * @param scanner The Scanner passed on to this method has already read te
+	 *                first line and crated <code>columns</code> from it.
+	 */
+	private void guiUpload(String[] columns,
+						   Scanner scanner) {
+		
 		GridBagConstraints constraints = new GridBagConstraints();
 		GridBagLayout layout = new GridBagLayout();
 		
 		JFrame frame = new JFrame();
-		JScrollPane scrollPane= new JScrollPane();
+		JScrollPane scrollPane = new JScrollPane();
 		JPanel panel = new JPanel(layout);
 		
 		Object[] boxOptions = J_TO_SQL.values().toArray();
 		
-		JRadioButton[] radioButtons = new JRadioButton[headers.length + 1];
+		JRadioButton[] radioButtons = new JRadioButton[columns.length + 1];
 		JLabel primaryColumnLabel = new JLabel("Primary Column:");
 		
-		JComboBox[] boxes = new JComboBox[headers.length];
-		JLabel[] labels = new JLabel[headers.length];
+		JComboBox[] boxes = new JComboBox[columns.length];
+		JLabel[] labels = new JLabel[columns.length];
 		
 		JLabel nameLabel = new JLabel("Table Name:");
 		JTextField nameField = new JTextField();
 		nameField.setColumns(20);
 		
 		JTextField fileField = new JTextField();
+		//Todo: actually place the label in the gui
 		JLabel fileLabel = new JLabel("Table Name:");
 		fileField.setColumns(30);
 		
@@ -328,7 +425,7 @@ class CRUDBuddy {
 			constraints.gridy = i + 1;
 			constraints.gridx = 0;
 			
-			labels[i] = new JLabel(headers[i]);
+			labels[i] = new JLabel(columns[i]);
 			panel.add(labels[i], constraints);
 			
 			constraints.gridx = 1;
@@ -351,43 +448,39 @@ class CRUDBuddy {
 		panel.add(radioButtons[i], constraints);
 		
 		JButton ok = new JButton("Ok");
-		ok.addActionListener(new ActionListener() {
-			/**
-			 * Invoked when an action occurs.
-			 *
-			 * @param e the event to be processed
-			 */
-			@Override public void actionPerformed(ActionEvent e) {
-				if(nameField.getText().length() > 0 /*&& fileField.getText().length() > 0*/) {
-					//Todo: create fileField to get fileName
-					
-					String tableName = nameField.getText();
-					String fileName = fileField.getText();
-					Enumeration<AbstractButton> bs = buttonGroup.getElements();
-					boolean foundButton = false;
-					for(int j = 0; j < radioButtons.length - 1; j++) {
-						JRadioButton radioButton = (JRadioButton)bs.nextElement();
-						if(radioButton.isSelected() && bs.hasMoreElements()) {
-							PRIMARY_KEY.setValue(J_TO_SQL.get(j));
-							foundButton = true;
-						}
+		ok.addActionListener(e->{
+			
+			if(nameField.getText().length() >
+			   0 /*&& fileField.getText().length() > 0*/) {
+				//Todo: create fileField to get fileName
+				
+				String tableName = nameField.getText();
+				String fileName = fileField.getText();
+				Enumeration<AbstractButton> bs = buttonGroup.getElements();
+				boolean foundButton = false;
+				for(int j = 0; j < radioButtons.length - 1; j++) {
+					JRadioButton radioButton = (JRadioButton)bs.nextElement();
+					if(radioButton.isSelected() && bs.hasMoreElements()) {
+						PRIMARY_KEY.setValue(J_TO_SQL.get(j));
+						foundButton = true;
 					}
-					if(!foundButton) {
-						PRIMARY_KEY.setValue("idx");
-						PRIMARY_KEY.setValue("int(16)");
-					}
-					typeMap = new HashMap<>();
-					for(int j = 0; j < boxes.length; j++) {
-						typeMap.put(j, boxes[j].getSelectedItem() + "");
-					}
-					try {
-						batchLoadTable(tableName, headers, "inventory_team4.csv", scanner);
-					}
-					catch(SQLException throwables) {
-						throwables.printStackTrace();
-					}
-					frame.setVisible(false);
 				}
+				if(!foundButton) {
+					PRIMARY_KEY.setValue("idx");
+					PRIMARY_KEY.setValue("int(16)");
+				}
+				typeMap = new HashMap<>();
+				for(int j = 0; j < boxes.length; j++) {
+					typeMap.put(j, boxes[j].getSelectedItem() + "");
+				}
+				try {
+					upLoadTable(tableName, columns, "inventory_team4.csv",
+								scanner);
+				}
+				catch(SQLException throwables) {
+					throwables.printStackTrace();
+				}
+				frame.setVisible(false);
 			}
 		});
 		constraints.gridx = 0;
@@ -399,6 +492,7 @@ class CRUDBuddy {
 		scrollPane.setMaximumSize(new Dimension(dim.width - 1, dim.height - 1));
 		cancel.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
+				
 				frame.remove(panel);
 				frame.setVisible(false);
 			}
@@ -411,8 +505,8 @@ class CRUDBuddy {
 		frame.setSize(new Dimension(sizeW, sizeH));
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
-		return frame;
 	}
+	
 	/**
 	 * Formats the String to be sent as sql code
 	 * <p>
@@ -435,25 +529,25 @@ class CRUDBuddy {
 			}
 			sf.append(array[i]);
 			if(i == values.length - 1) {
-				sf.append(")"); 
-			} else {
+				sf.append(")");
+			}
+			else {
 				sf.append(",");
 			}
 		}
 		return sf.toString();
 	}
 	
-
 	/**
 	 * create the tuple of headers as a String to be sent
 	 * as sql code
 	 *
 	 * @return the column titles, comma separated, in
-	 * parentheses
-	 * i.e., (c1, c2,...cn)
+	 * parentheses i.e., (c1, c2,...cn)
 	 */
 	private static String getHeaderTuple(String[] columnNames) {
-		if(columnNames.length ==0) {
+		
+		if(columnNames.length == 0) {
 			return null;
 		}
 		
@@ -466,42 +560,60 @@ class CRUDBuddy {
 		return sf.append(columnNames[i]).append(")").toString();
 	}
 	
-	public void loadTable(String fileName) {
+	/**
+	 * public method invokes te internal call to <code>createBlankTable</code>.
+	 *
+	 * @param fileName the .csv file to load into the database.
+	 */
+	public void upLoadTable(String fileName) {
+		
 		try {
-			loadRemoteTable(fileName);
+			createBlankTable(fileName);
 		}
 		catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
-		private void loadRemoteTable(String filePath) throws Exception {
+	
+	/**
+	 * Starts the process of getting user input for information about the table to
+	 * be created and uploaded. Summons a gui to collect the input.
+	 *
+	 * @param filePath the .csv file to make a table from.
+	 * @throws Exception if the file type is not supported or found.
+	 */
+	private void createBlankTable(String filePath) throws Exception {
+		
 		int[] count = null;
 		if(!filePath.endsWith(".csv")) {
 			//Todo: throw new FileNotSupportedException
 			return;
 		}
+		
 		scanner = new Scanner(new File(filePath));
 		String[] headers = scanner.nextLine().split(",");
-		uploadTableGUI(headers, scanner);
+		guiUpload(headers, scanner);
 	}
 	
-	
-	
-	
-	
 	/**
-	 * Delete the row  in the specified table
+	 * Delete the record in the specified table
 	 *
-	 * @param table
-	 * @param idColumn
-	 * @param idValue
-	 * @return
-	 * @throws SQLException
+	 * @param table    contains the target record
+	 * @param idColumn the column which has a unique value to identify the record
+	 * @param idValue  the value of the identifying column
+	 * @return int = either the row count for SQL Data Manipulation Language (DML)
+	 * statements, or 0 for SQL statements that return nothing
+	 * @throws SQLException database access errors
 	 */
-	public int deleteRecord(String table, String idColumn, Object idValue) throws SQLException {
+	public int deleteRecord(String table,
+							String idColumn,
+							Object idValue)
+	throws SQLException {
+		
 		ArrayList<String> arrays = new ArrayList<>();
-		return connection.createStatement().executeUpdate(
-		 "DELETE FROM " + table + " WHERE " + idColumn + " = " + idValue);
+		return connection.createStatement().executeUpdate(String.format(
+		 "DELETE FROM %s WHERE %s = %s",
+		 table, idColumn, idValue));
 	}
 	
 	/**
@@ -512,6 +624,7 @@ class CRUDBuddy {
 	 * @throws SQLException
 	 */
 	public int deleteAllRecords(String table) throws SQLException {
+		
 		return connection.createStatement().executeUpdate("DELETE FROM " + table);
 	}
 	
@@ -523,41 +636,43 @@ class CRUDBuddy {
 	 * @throws SQLException
 	 */
 	public static int deleteTable(String tableName) throws SQLException {
-		return connection.createStatement().executeUpdate("DROP TABLE IF EXISTS " + tableName);
+		
+		return connection.createStatement().executeUpdate(
+		 "DROP TABLE IF EXISTS " + tableName);
 	}
-	
 	
 	/**
 	 * helper method to clean up code when concatenating commas for sql code.
 	 *
-	 * @param length          the length of the array to check against
-	 * @param i               string to append to the end of a list of sql elements in a query. 
-	 *                           (usually a
-	 *                        parentheses or empty string).
-	 * @param endingCharacter the
-	 * @return either a comma if there are more elements left to iterate through (as calculated
+	 * @param length   the length of the array to check against
+	 * @param i        string to append to the end of a list of sql elements
+	 *                 in a query.
+	 *                 (usually a
+	 *                 parentheses or empty string).
+	 * @param lastChar the
+	 * @return either a comma if there are more elements left to iterate through
+	 * (as calculated
 	 * by <code>length</code>, or the ending character
 	 */
-	private static String getComma(int length, int i, String endingCharacter) {
+	private static String getComma(int length,
+								   int i,
+								   String lastChar) {
+		
 		if(i < length - 1) {
 			return ", ";
 		}
-		return endingCharacter + "";
-	}
-	
-	private String getLastChar(boolean isLastIteration, String optionTrue, String optionFalse) {
-		if(isLastIteration) {
-			return optionTrue;
-		}
-		return optionFalse;
+		return lastChar + "";
 	}
 	
 	/**
-	 * 
-	 * @param columnValue
-	 * @return
+	 * wraps the given object in quotes if it is a string
+	 *
+	 * @param columnValue some value to check
+	 * @return a new string with quotes around it, if it is a String. Otherwise,
+	 * the string representation of the object.
 	 */
-	private static String formatValue(Object columnValue) {
+	private static String quoteWrap(Object columnValue) {
+		
 		if(columnValue instanceof String) {
 			return "'" + columnValue + "'";
 		}
@@ -565,12 +680,35 @@ class CRUDBuddy {
 	}
 	
 	/**
-	 * @return the beginning of the  string for the url (without username and password)
+	 * wraps the given String in quotes if it actually represents String object.
+	 * Similar to the above method, but used in cases where all object types are
+	 * being handled as strings.
+	 *
+	 * @param value    some value to check
+	 * @param isString some boolean value to determine if <code>value</code>
+	 *                 should be wrapped in quotes
+	 * @return a new string with quotes around it, if the <code>value</code>
+	 * actually represents a String. Otherwise, the original string.
 	 */
-	private static String getURL() {
-		return "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + DB_NAME;
+	public String quoteWrap(String value,
+							boolean isString) {
+		
+		if(isString) {
+			return "'" + value + "'";
+		}
+		return value;
 	}
 	
+	/**
+	 * get the URL by joining static variable together.
+	 *
+	 * @return the beginning of the  string for the url (without username and
+	 * password)
+	 */
+	private static String getURL() {
+		
+		return "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + DB_NAME;
+	}
 	
 	public static final int STRING = 1;
 	public static final int CHAR = 2;
@@ -594,31 +732,40 @@ class CRUDBuddy {
 	public static final int ARRAY = 20;
 	public static final int REF = 21;
 	public static final int STRUCT = 22;
-	public static final int NO_INDEX_COLUMN = -1;
-	private static Map<Integer, String> J_TO_SQL = Map
-	 .ofEntries(entry(STRING, "VARCHAR(16)"), entry(CHAR, "CHAR"), entry(LONGVARCHAR, "VARCHAR(32)"
-	 ), entry(BOOLBIT, "BIT"), entry(NUMERIC, "NUMERIC"), entry(TINYINT, "int(2)"), entry(SMALLINT
-	  , "int(4)"), entry(INTEGER, "int(8)"), entry(BIGINT, "int(16)"), entry(REAL, "REAL"),
-	  entry(FLOAT, "FLOAT"), entry(DOUBLE, "decimal(13,2)"), entry(VARBINARY, "VARBINARY"),
-	  entry(BINARY, "BINARY"), entry(DATE, "DATE"), entry(TIME, "TIME"), entry(TIMESTAMP, 
-	   "TIMESTAMP"), entry(CLOB, "CLOB"), entry(BLOB, "BLOB"), entry(ARRAY, "ARRAY"), entry(REF, 
-	   "REF"), entry(STRUCT, "STRUCT"));
-	private static Map<String, Integer> SQL_TO_J = Map
-	 .ofEntries(entry("VARCHAR(16)", STRING), entry("CHAR", CHAR), entry("VARCHAR(32)",
-	  LONGVARCHAR), entry("BIT", BOOLBIT), entry("NUMERIC", NUMERIC), entry("int(2)", TINYINT),
-	  entry("int(4)", SMALLINT), entry("int(8)", INTEGER), entry("int(16)", BIGINT), entry("REAL",
-	   REAL), entry("FLOAT", FLOAT), entry("decimal(13,2)", DOUBLE), entry("VARBINARY", VARBINARY)
-	  , entry("BINARY", BINARY), entry("DATE", DATE), entry("TIME", TIME), entry("TIMESTAMP",
-	   TIMESTAMP), entry("CLOB", CLOB), entry("BLOB", BLOB), entry("ARRAY", ARRAY), entry("REF",
-	   REF), entry("STRUCT", STRUCT));
+	private static final Map<Integer, String> J_TO_SQL = Map
+	 .ofEntries(entry(
+	  STRING, "VARCHAR(16)"),
+				entry(CHAR, "CHAR"),
+				entry(LONGVARCHAR, "VARCHAR(32)"),
+				entry(BOOLBIT, "BIT"),
+				entry(NUMERIC, "NUMERIC"),
+				entry(TINYINT, "int(2)"),
+				entry(SMALLINT, "int(4)"),
+				entry(INTEGER, "int(8)"),
+				entry(BIGINT, "int(16)"),
+				entry(REAL, "REAL"),
+				entry(FLOAT, "FLOAT"),
+				entry(DOUBLE, "decimal(13,2)"),
+				entry(VARBINARY, "VARBINARY"),
+				entry(BINARY, "BINARY"),
+				entry(DATE, "DATE"),
+				entry(TIME, "TIME"),
+				entry(TIMESTAMP, "TIMESTAMP"),
+				entry(CLOB, "CLOB"),
+				entry(BLOB, "BLOB"),
+				entry(ARRAY, "ARRAY"),
+				entry(REF, "REF"),
+				entry(STRUCT, "STRUCT"));
 	
 	/**
 	 * tester method
+	 *
 	 * @param query
 	 * @return
 	 * @throws SQLException
 	 */
 	public ResultSet query(String query) throws SQLException {
+		
 		return connection.createStatement().executeQuery(query);
 	}
 }

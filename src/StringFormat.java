@@ -33,6 +33,9 @@ class StringFormat {
 		return sb.length();
 	}
 	
+	/**
+	 * StringBuilder {@inheritDoc}
+	 */
 	public void replace(int i, int length, String s) {
 		sb = sb.replace(i, length, s);
 	}

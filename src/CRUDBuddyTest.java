@@ -64,7 +64,7 @@ class CRUDBuddyTest extends JPanel {
 	
 	@Test void assertUploadTableGuiIsOk() throws SQLException, ClassNotFoundException {
 		CRUDBuddy crud = new CRUDBuddy(userName, password, ipAddress, portNumber, databaseName);
-		crud.loadTable("inventory_team4.csv");
+		crud.upLoadTable("inventory_team4.csv");
 	}
 	
 	@Test public void assertTableViewerGiuIsOk() throws SQLException, ClassNotFoundException {
