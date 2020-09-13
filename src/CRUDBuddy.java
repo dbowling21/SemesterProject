@@ -2,8 +2,11 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.sql.*;
 import java.util.*;
+import java.util.List;
 import javax.swing.*;
 
 import static java.util.Map.entry;
@@ -22,7 +25,6 @@ class CRUDBuddy {
 	private static String tableName;
 	private static Scanner scanner;
 	private static String[] headers;
-	private static Pair<String, String> primaryKey = new Pair<>("idx", "int(16)");
 	
 	/**
 	 * Class that facilitates a connection to a database, and carries out CRUD
@@ -56,11 +58,12 @@ class CRUDBuddy {
 	
 	/**
 	 * Creates a blank Table
+	 *
 	 * @param tableName name of the table.
-	 * @param headers String[] of tables.
-	 * @param typeMap HashMap where each index in <code>headers</code> has the 
-	 *                   string representation of its data type as the value
-	 * @return either (1) the row count for SQL Data Manipulation Language (DML) 
+	 * @param headers   String[] of tables.
+	 * @param typeMap   HashMap where each index in <code>headers</code> has the
+	 *                  string representation of its data type as the value
+	 * @return either (1) the row count for SQL Data Manipulation Language (DML)
 	 * statements or (2) 0 for SQL statements that return nothing
 	 * @throws SQLException if a database access error occurs
 	 */
@@ -76,7 +79,7 @@ class CRUDBuddy {
 		
 		for(int i = 0; i < typeMap.size(); i++) {
 			sb.appendf(String.format("%s %s,",
-									 headers[i], typeMap.get(i)));
+			 headers[i], typeMap.get(i)));
 		}
 		sb.appendf(" PRIMARY KEY (%s));", PRIMARY_KEY.getKey());
 		return connection.createStatement()
@@ -206,8 +209,8 @@ class CRUDBuddy {
 		}
 		
 		StringFormat sf = new StringFormat("SELECT %s FROM %s WHERE %s = '%s'",
-										   arrayToCSV(columnNames), tableName,
-										   idColumnName, idValue);
+		 arrayToCSV(columnNames), tableName,
+		 idColumnName, idValue);
 		
 		ResultSet rs = connection.createStatement().executeQuery(sf.toString());
 		
@@ -222,7 +225,52 @@ class CRUDBuddy {
 	}
 	
 	/**
-	 * creates a .csv-compatible line from an array of Strings
+	 * @param table
+	 * @return
+	 * @throws SQLException
+	 */
+	public ResultSet readAllRecords(String table) throws SQLException {
+		
+		return connection.createStatement().executeQuery("SELECT * FROM " + table);
+	}
+	
+	public File writeToFile(String path, ArrayList<String> columns,
+							ResultSet results)
+	throws FileNotFoundException, SQLException {
+		
+		boolean isIndexed = PRIMARY_KEY.getKey().equals("idx");
+		List<String> newColumns;
+		int start;
+		
+		if(columns.size() == 0) {
+			throw new InputMismatchException();
+		}
+		
+		start = isIndexed?1:0;
+		newColumns = columns.subList(start, columns.size());
+		
+		File file = new File(path);
+		PrintWriter pw = new PrintWriter(file);
+		pw.println(String.join(",", newColumns));
+		
+		while(results.next()) {
+			Iterator<String> it = newColumns.iterator();
+			
+			while(it.hasNext()) {
+				pw.print(results.getObject(it.next()));
+				if(it.hasNext()) {
+					pw.print(",");
+				}
+			}
+			pw.println();
+		}
+		
+		pw.close();
+		return file;
+	}
+	
+	/**
+	 * creates a .csv-compatible line from a String[]
 	 *
 	 * @param array the array to convert to a .csv format (typically column names)
 	 * @return the .csv line for <code>array</code>
@@ -230,6 +278,18 @@ class CRUDBuddy {
 	public String arrayToCSV(String[] array) {
 		
 		String a = Arrays.toString(array);
+		return a.substring(1, a.length() - 1);
+	}
+	
+	/**
+	 * creates a .csv-compatible line from an ArrayList<String>
+	 *
+	 * @param array the array to convert to a .csv format (typically column names)
+	 * @return the .csv line for <code>array</code>
+	 */
+	public String arrayToCSV(ArrayList<String> array) {
+		
+		String a = array.toString();
 		return a.substring(1, a.length() - 1);
 	}
 	
@@ -245,9 +305,10 @@ class CRUDBuddy {
 	 * @param isString     indicates which elements from <code>newValues</code>
 	 *                     need to be
 	 *                     wrapped in
-	 *                     in quotes. If newValues[i] is a represents SQL VARCHAR
+	 *                     in quotes. If newValues[start] is a represents SQL 
+	 *                     VARCHAR
 	 *                     type, then
-	 *                     isString[i] should be true. Otherwise, false.
+	 *                     isString[start] should be true. Otherwise, false.
 	 * @param idIsString   indicates whether or not the row-identifying value is a
 	 *                     should be
 	 *                     wrapped in quotes, for the same reason as isString[]
@@ -271,8 +332,8 @@ class CRUDBuddy {
 			String newValue = quoteWrap(newValues[i], isString[i]);
 			
 			String sql = String.format("UPDATE %s SET %s = %s WHERE %s = %s;",
-									   tableName, columnNames[i], newValue,
-									   idColumnName, idValue);
+			 tableName, columnNames[i], newValue,
+			 idColumnName, idValue);
 			
 			returnIntegers[i] = connection.createStatement().executeUpdate(sql);
 		}
@@ -475,7 +536,7 @@ class CRUDBuddy {
 				}
 				try {
 					upLoadTable(tableName, columns, "inventory_team4.csv",
-								scanner);
+					 scanner);
 				}
 				catch(SQLException throwables) {
 					throwables.printStackTrace();
@@ -543,7 +604,7 @@ class CRUDBuddy {
 	 * as sql code
 	 *
 	 * @return the column titles, comma separated, in
-	 * parentheses i.e., (c1, c2,...cn)
+	 * parentheses start.e., (c1, c2,...cn)
 	 */
 	private static String getHeaderTuple(String[] columnNames) {
 		
@@ -645,7 +706,7 @@ class CRUDBuddy {
 	 * helper method to clean up code when concatenating commas for sql code.
 	 *
 	 * @param length   the length of the array to check against
-	 * @param i        string to append to the end of a list of sql elements
+	 * @param start    string to append to the end of a list of sql elements
 	 *                 in a query.
 	 *                 (usually a
 	 *                 parentheses or empty string).
@@ -735,27 +796,27 @@ class CRUDBuddy {
 	private static final Map<Integer, String> J_TO_SQL = Map
 	 .ofEntries(entry(
 	  STRING, "VARCHAR(16)"),
-				entry(CHAR, "CHAR"),
-				entry(LONGVARCHAR, "VARCHAR(32)"),
-				entry(BOOLBIT, "BIT"),
-				entry(NUMERIC, "NUMERIC"),
-				entry(TINYINT, "int(2)"),
-				entry(SMALLINT, "int(4)"),
-				entry(INTEGER, "int(8)"),
-				entry(BIGINT, "int(16)"),
-				entry(REAL, "REAL"),
-				entry(FLOAT, "FLOAT"),
-				entry(DOUBLE, "decimal(13,2)"),
-				entry(VARBINARY, "VARBINARY"),
-				entry(BINARY, "BINARY"),
-				entry(DATE, "DATE"),
-				entry(TIME, "TIME"),
-				entry(TIMESTAMP, "TIMESTAMP"),
-				entry(CLOB, "CLOB"),
-				entry(BLOB, "BLOB"),
-				entry(ARRAY, "ARRAY"),
-				entry(REF, "REF"),
-				entry(STRUCT, "STRUCT"));
+	  entry(CHAR, "CHAR"),
+	  entry(LONGVARCHAR, "VARCHAR(32)"),
+	  entry(BOOLBIT, "BIT"),
+	  entry(NUMERIC, "NUMERIC"),
+	  entry(TINYINT, "int(2)"),
+	  entry(SMALLINT, "int(4)"),
+	  entry(INTEGER, "int(8)"),
+	  entry(BIGINT, "int(16)"),
+	  entry(REAL, "REAL"),
+	  entry(FLOAT, "FLOAT"),
+	  entry(DOUBLE, "decimal(13,2)"),
+	  entry(VARBINARY, "VARBINARY"),
+	  entry(BINARY, "BINARY"),
+	  entry(DATE, "DATE"),
+	  entry(TIME, "TIME"),
+	  entry(TIMESTAMP, "TIMESTAMP"),
+	  entry(CLOB, "CLOB"),
+	  entry(BLOB, "BLOB"),
+	  entry(ARRAY, "ARRAY"),
+	  entry(REF, "REF"),
+	  entry(STRUCT, "STRUCT"));
 	
 	/**
 	 * tester method
