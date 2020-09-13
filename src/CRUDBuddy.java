@@ -103,7 +103,7 @@ class CRUDBuddy {
 	public ArrayList<String> readColumnNames(String dbName, String tableName) throws SQLException {
 		
 		String sql =
-		 "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE " + "`TABLE_SCHEMA`='" +
+		 "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='" +
 		  dbName + "' AND `TABLE_NAME`='" + tableName + "';";
 		
 		ResultSet rs = connection.createStatement().executeQuery(sql);
@@ -115,7 +115,6 @@ class CRUDBuddy {
 		}
 		return headers;
 	}
-	
 	/**
 	 * Gets an arrayList of column types from a table
 	 *
@@ -123,7 +122,7 @@ class CRUDBuddy {
 	 * @return
 	 * @throws SQLException
 	 */
-	public ResultSet getColumnTypes(String tableName) throws SQLException {
+	public ResultSet readColumnTypes(String tableName) throws SQLException {
 		String sql =
 		 "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS " + "WHERE table_name = " + tableName +
 		  " AND COLUMN_NAME = 'product_id'";
@@ -137,7 +136,7 @@ class CRUDBuddy {
 	 * @param tableName    the name of the table to query.
 	 * @param columnNames  array of column names to query.
 	 * @param idColumnName the column name of the target record.
-	 * @param idValue      the unique the value for the target record.
+	 * @param idValue      the unique value for the target record.
 	 * @return null if the columnNames array is null or empty. Otherwise, a Hashmap of results
 	 * (HashMap<String, Object>). Each String is a column header, and each value is an Object of
 	 * whichever type is associated with the column.
@@ -150,7 +149,7 @@ class CRUDBuddy {
 		}
 		String arrayString = Arrays.toString(columnNames);
 		
-		String sql =
+		String sql = 
 		 "SELECT " + arrayString.substring(1, arrayString.length() - 1) + " FROM " + tableName +
 		  " WHERE " + idColumnName + " = '" + idValue + "'";
 		
@@ -293,6 +292,11 @@ class CRUDBuddy {
 		return endingCharacter + "";
 	}
 	
+	/**
+	 * 
+	 * @param columnValue
+	 * @return
+	 */
 	private static String formatValue(Object columnValue) {
 		if(columnValue instanceof String) {
 			return "'" + columnValue + "'";
@@ -307,113 +311,6 @@ class CRUDBuddy {
 		return "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + DB_NAME;
 	}
 	
-	
-	/*public  JFrame getTypeGui(String[] params) {
-		headers = params;
-		GridBagConstraints constraints =
-		 new GridBagConstraints();
-		GridBagLayout layout = new GridBagLayout();
-		JFrame frame = new JFrame();
-		JPanel panel = new JPanel(layout);
-		// Todo: add gui JRadioButton to the left of each
-		//  label for choosing an AUTO_INCREMENT column
-		JComboBox[] boxes = new JComboBox[params.length];
-		JRadioButton[] radioButtons =
-		 new JRadioButton[params.length + 1];
-		JLabel[] labels = new JLabel[params.length];
-		Object[] boxOptions = J_TO_SQL.values().toArray();
-		JLabel nameLabel = new JLabel("Table Name:");
-		JLabel primaryColumnLabel =
-		 new JLabel("Primary Column:");
-		JTextField nameField = new JTextField();
-		nameField.setColumns(20);
-		constraints.gridx = 0;
-		panel.add(nameLabel, constraints);
-		constraints.gridx = 1;
-		constraints.gridx = 3;
-		panel.add(primaryColumnLabel, constraints);
-		constraints.gridx = 1;
-		constraints.gridwidth = 2;
-		panel.add(nameField, constraints);
-		constraints.gridwidth = 1;
-		ButtonGroup buttonGroup = new ButtonGroup();
-		int i = 0;
-		for(; i < boxes.length; i++) {
-			constraints.gridy = i + 1;
-			constraints.gridx = 0;
-			labels[i] = new JLabel(params[i]);
-			panel.add(labels[i], constraints);
-			constraints.gridx = 1;
-			boxes[i] = new JComboBox(boxOptions);
-			boxes[i].setEditable(true);
-			boxes[i].setSelectedItem("VARCHAR(16)");
-			panel.add(boxes[i], constraints);
-			constraints.gridx = 3;
-			radioButtons[i] = new JRadioButton("", false);
-			buttonGroup.add(radioButtons[i]);
-			panel.add(radioButtons[i], constraints);
-		}
-		
-		radioButtons[i] =
-		 new JRadioButton("Add index column", true);
-		buttonGroup.add(radioButtons[i]);
-		constraints.gridy = i + 1;
-		panel.add(radioButtons[i], constraints);
-		JButton ok = new JButton("Ok");
-		ok.addActionListener(e->{
-			if(nameField.getText().length() > 0) {
-				tableName = nameField.getText();
-				Enumeration<AbstractButton> bs =
-				 buttonGroup.getElements();
-				boolean foundButton = false;
-				for(int j = 0;
-				 j < radioButtons.length - 1; j++) {
-					JRadioButton radioButton =
-					 (JRadioButton)bs.nextElement();
-					if(radioButton.isSelected() &&
-					 bs.hasMoreElements()) {
-						primaryKey
-						 .setValue(J_TO_SQL.get(j));
-						foundButton = true;
-					}
-				}
-				if(!foundButton) {
-					primaryKey.setValue("idx");
-					primaryKey.setValue("int(16)");
-				}
-				typeMap = new HashMap<>();
-				for(int j = 0; j < boxes.length; j++) {
-					typeMap.put(j,
-					 boxes[j].getSelectedItem() + "");
-				}
-				try {
-					//createConnection();
-					batchLoadTable(tableName);
-				}
-				catch(SQLException | FileNotFoundException throwables) {
-					throwables.printStackTrace();
-				}
-				frame.setVisible(false);
-			}
-		});
-		constraints.gridx = 0;
-		constraints.gridy = i + 1;
-		panel.add(ok, constraints);
-		constraints.gridx = 1;
-		JButton cancel = new JButton("Cancel");
-		cancel.addActionListener(e->{
-			frame.remove(panel);
-			frame.setVisible(false);
-		});
-		panel.add(cancel, constraints);
-		frame.getContentPane().add(panel);
-		int sizeW = panel.getPreferredSize().width + 50;
-		int sizeH = panel.getPreferredSize().height + 50;
-		frame.setSize(new Dimension(sizeW, sizeH));
-		frame.setLocationRelativeTo(null);
-		frame.setVisible(true);
-		return frame;
-	}*/
 	
 	/**
 	 * Formats the String to be sent as sql code
@@ -438,29 +335,8 @@ class CRUDBuddy {
 		return s;
 	}
 	
-	/*	public int[] batchLoadTable(String tableName) throws SQLException, FileNotFoundException {
-		Deque<String> strings = new LinkedList<>();
-		Statement statement = connection.createStatement();
-		if(typeMap != null) {
-			createTable(tableName, headers, typeMap);
-			String sql = "INSERT INTO " + tableName + " " + getHeaders(headers) + ") VALUES (";
-			scanner = new Scanner(new File("inventory_team4.csv"));
-			scanner.nextLine();
-			for(int i = 0; scanner.hasNextLine(); i++) {
-				strings.push(sql + getInsertionString(scanner.nextLine().split(",")));
-			}
-			for(int i = 0; !strings.isEmpty(); i++) {
-				statement.executeUpdate(strings.pop());
-				if(i % 1000 == 0) {
-					System.out.println(i);
-				}
-			}
-		}
-		System.out.println("Done");
-		return null;
-	}*/
 	
-	private static String getHeaders(String[] columnNames) {
+	private static String columnNamesSQLString(String[] columnNames) {
 		String headers = "(";
 		for(String s: columnNames) {
 			headers += s + ",";
@@ -508,6 +384,12 @@ class CRUDBuddy {
 	   TIMESTAMP), entry("CLOB", CLOB), entry("BLOB", BLOB), entry("ARRAY", ARRAY), entry("REF",
 	   REF), entry("STRUCT", STRUCT));
 	
+	/**
+	 * tester method
+	 * @param query
+	 * @return
+	 * @throws SQLException
+	 */
 	public ResultSet query(String query) throws SQLException {
 		return connection.createStatement().executeQuery(query);
 	}
