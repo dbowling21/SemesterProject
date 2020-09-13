@@ -2,7 +2,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.sql.*;
 import java.util.*;
 import javax.swing.*;
@@ -49,19 +48,21 @@ class CRUDBuddy {
 	}
 	
 	public int createTable(String tableName, String[] headers, HashMap<Integer, String> typeMap) throws SQLException {
-		deleteTable(tableName);
 		
-		String s =
-		 "CREATE TABLE " + tableName + "(" + PRIMARY_KEY.getKey() + " " + PRIMARY_KEY.getValue() +
-		  " NOT NULL AUTO_INCREMENT,";
+		deleteTable(tableName);
+		StringFormat sb = new StringFormat(
+		 "CREATE TABLE %s(%s %s) NOT NULL AUTO_INCREMENT,",
+		 tableName, PRIMARY_KEY.getKey(), PRIMARY_KEY.getValue());
 		
 		for(int i = 0; i < typeMap.size(); i++) {
-			s += headers[i] + " " + typeMap.get(i) + ", ";
+			sb.appendf(String.format("%s %s,", 
+			 headers[i], typeMap.get(i)));
 		}
-		
+		sb.appendf(" PRIMARY KEY (%s));", PRIMARY_KEY.getKey());
 		return connection.createStatement()
-		 .executeUpdate(s + "PRIMARY KEY (" + PRIMARY_KEY.getKey() + "))" + ";");
+		 .executeUpdate(sb.toString());
 	}
+
 	/**
 	 * Specify a table name and array of column names, along with a HashMap indicating the data
 	 * type for each column.  Use the constants included at the bottom of this class to specify
@@ -93,18 +94,19 @@ class CRUDBuddy {
 	public void createTable(String tableName, String[] headers, LinkedList<Integer> columnTypes) throws SQLException {
 		deleteTable(tableName);
 		
-		String sql =
-		 "CREATE TABLE " + tableName + "(" + PRIMARY_KEY.getKey() + " " + PRIMARY_KEY.getValue() +
-		  " NOT NULL AUTO_INCREMENT,";
+		StringFormat sf = new StringFormat(
+		 "CREATE TABLE %s(%s %s) NOT NULL AUTO_INCREMENT,",
+		 tableName, PRIMARY_KEY.getKey(), PRIMARY_KEY.getValue());
 		
 		int i = 0;
 		Iterator<Integer> itr = columnTypes.iterator();
 		for(; itr.hasNext(); i++) {
-			sql += headers[i] + " " + columnTypes.get(itr.next()) + ", ";
+			Integer columnType = columnTypes.get(itr.next());
+			sf.appendf("%s %s, ", headers[i], columnType);
 		}
 		
-		connection.createStatement()
-		 .executeUpdate(sql + "PRIMARY KEY (" + PRIMARY_KEY.getKey() + "))" + ";");
+		sf.appendf(" PRIMARY KEY (%S));", PRIMARY_KEY.getKey());
+		connection.createStatement().executeUpdate(sf.toString());
 	}
 	
 	/**
@@ -117,11 +119,11 @@ class CRUDBuddy {
 	 */
 	public ArrayList<String> readColumnNames(String dbName, String tableName) throws SQLException {
 		
-		String sql =
-		 "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA`='" +
-		  dbName + "' AND `TABLE_NAME`='" + tableName + "';";
+		StringFormat sf = new StringFormat(
+		 "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS`" +
+		 " WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'",dbName, tableName);
 		
-		ResultSet rs = connection.createStatement().executeQuery(sql);
+		ResultSet rs = connection.createStatement().executeQuery(sf.toString());
 		
 		ArrayList<String> headers = new ArrayList<>();
 		
@@ -138,10 +140,10 @@ class CRUDBuddy {
 	 * @throws SQLException
 	 */
 	public ResultSet readColumnTypes(String tableName) throws SQLException {
-		String sql =
-		 "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS " + "WHERE table_name = " + tableName +
-		  " AND COLUMN_NAME = 'product_id'";
-		return connection.createStatement().executeQuery(sql);
+		StringFormat sf = new StringFormat(
+		 "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = %s AND " +
+		  "COLUMN_NAME = 'product_id'", tableName);
+		return connection.createStatement().executeQuery(sf.toString());
 	}
 	
 	/**
@@ -162,13 +164,12 @@ class CRUDBuddy {
 		if(columnNames.length == 0) {
 			return null;
 		}
-		String arrayString = Arrays.toString(columnNames);
 		
-		String sql = 
-		 "SELECT " + arrayString.substring(1, arrayString.length() - 1) + " FROM " + tableName +
-		  " WHERE " + idColumnName + " = '" + idValue + "'";
+		StringFormat sf = new StringFormat("SELECT %s FROM %s WHERE %s = '%s'", 
+		 arrayToCSV(columnNames), tableName, idColumnName, idValue);
 		
-		ResultSet rs = connection.createStatement().executeQuery(sql);
+		ResultSet rs = connection.createStatement().executeQuery(sf.toString());
+		
 		HashMap<String, Object> objectMap = new HashMap<>();
 		while(rs.next()) {
 			for(int i = 0; i < columnNames.length; i++) {
@@ -177,6 +178,11 @@ class CRUDBuddy {
 			}
 		}
 		return objectMap;
+	}
+	
+	public String arrayToCSV(String[] array) {
+		String a = Arrays.toString(array);
+		return a.substring(1, a.length() - 1);
 	}
 	
 	/**
@@ -195,41 +201,30 @@ class CRUDBuddy {
 	 * @return returnIntegers for the feedback received from MySQL
 	 * @throws SQLException
 	 */
-	public int[] updateRow(String tableName, String[] columnNames, String[] newValues,
-	 String idValue, String idColumnName, boolean[] isString, boolean idIsString) throws SQLException {
+	public int[] updateRow(String tableName, String[] columnNames, 
+	 String[] newValues, String idValue,
+	 String idColumnName, boolean[] isString,
+	 boolean idIsString) throws SQLException {
 		
-		// wrap the idValue in single quotes if it is a string
-		idValue = idIsString?"\'" + idValue + "\'":idValue;
-		
-		// holds the integers returned by MySQL after updating
+		idValue = quoteWrap(idValue, idIsString);
 		int[] returnIntegers = new int[columnNames.length];
 		
-		// loop through and updateRow each of the columns on the given row
 		for(int i = 0; i < newValues.length; i++) {
+			String newValue = quoteWrap(newValues[i], isString[i]);
 			
-			// stop immediately if any of the new values are null
-			if(newValues[i] == null) {
-				return null;
-			}
+			String sql = String.format("UPDATE %s SET %s = %s WHERE %s = %s;", 
+			 tableName, columnNames[i], newValue, idColumnName, idValue);
 			
-			String sql =
-			 
-			 // i.e., UPDATE inventory 
-			 "UPDATE " + tableName + 
-			  
-			   /* 
-			   i.e., loop for every pair of columnName+newValue
-			   SET wholesale_cost = 49.99 WHERE product_id = 'ZRDATK9CSM23'
-			   SET supplier_id = 'DYCUYQFX' WHERE product_id = 'ZRDATK9CSM23' 
-			   */
-			  " SET " + columnNames[i] + " = " +
-			  (isString[i]?("'" + newValues[i] + "\'"):newValues[i]) + " WHERE " + idColumnName +
-			  " = " + idValue + ";";
-			
-			// execute the statement, and put the integer returned from MySQL in the return array
 			returnIntegers[i] = connection.createStatement().executeUpdate(sql);
 		}
 		return returnIntegers;
+	}
+	
+	public String quoteWrap(String value, boolean valueIsString) {
+		if(valueIsString) {
+			return "'" + value + "'";
+		}
+		return value;
 	}
 	
 	/**
@@ -243,47 +238,58 @@ class CRUDBuddy {
 	 */
 	public Object updateRow(String[] columnNames, Object[] columnValues, Object id,
 	 String tableName, Connection conn) throws SQLException {
-		String sql = "UPDATE " + tableName + " SET ";
+		
+		StringFormat sf = new StringFormat("UPDATE %s SET ", tableName);
+		
 		for(int i = 0; i < columnNames.length; i++) {
-			sql += columnNames[i] + " = " + formatValue(columnValues[i]);
-			sql = getComma(columnNames.length, i, "");
+			sf.appendf("%s = %s%s", columnNames[i], 
+			 formatValue(columnValues[i]), getComma(columnNames.length, i, ""));
 		}
-		sql += " where " + PRIMARY_KEY + " = " + id;
-		return conn.createStatement().executeUpdate(sql);
+		sf.appendf(" where %s=%s",PRIMARY_KEY, formatValue(id));
+		return conn.createStatement().executeUpdate(sf + "");
 	}
 	
 	
 	
-	private long[] batchLoadTable(String tableName, String[] headers, String fileName) throws SQLException, ClassNotFoundException, FileNotFoundException {
+	private long[] batchLoadTable(String tableName, String[] headers, String fileName,
+	 Scanner scanner) throws SQLException {
+		
 		long[] count = null;
 		Statement statement = connection.createStatement();
 		if(typeMap != null) {
 			createTable(tableName, headers, typeMap);
-			String s = "INSERT INTO " + tableName + " " + getHeaders(headers) + ")VALUES";
-			Scanner scanner = new Scanner(new File(fileName));
-			StringBuilder sql = new StringBuilder().append(s);
+			
+			StringFormat sf = new StringFormat("INSERT INTO %s %s)VALUES"
+			 ,tableName, getHeaderTuple(headers));
+			String sqlDeclaration = sf.toString();
+			
 			scanner.nextLine();
 			int MAX_LOOPS = 100000;
 			for(int i = 1; i < MAX_LOOPS && scanner.hasNextLine(); i++) {
-				String insertionString = getInsertionString(scanner.nextLine().split(","));
-				sql.append(insertionString).append(i == MAX_LOOPS - 1?";":",");
-				if(i == MAX_LOOPS - 1) {
-					statement.executeUpdate(sql.toString());
-					System.out.println(i);
+				String[] line = scanner.nextLine().split(",");
+				String nextInsertion = getInsertionString(line);
+				boolean isLastIteration = i == MAX_LOOPS - 1;
+				String lastChar = getLastChar(isLastIteration, ";", ",");
+				
+				sf.append(nextInsertion).append(lastChar);
+				
+				if(isLastIteration) {
+					statement.executeUpdate(sf.toString());
 					i = 0;
-					sql.setLength(0);
-					sql.append(s);
+					sf.setLength(0);
+					sf.append(sqlDeclaration);
 				}
 			}
-			sql.replace(sql.length() - 1, sql.length(), ";");
-			statement.executeUpdate(sql.toString());
+			sf.replace(sf.length() - 1, sf.length(), ";");
+			statement.executeUpdate(sf.toString());
 			scanner.close();
-			JOptionPane.showMessageDialog(null,
-			 "The csv file has been exported to " + tableName + " in the " + DB_NAME + "database.");
+			JOptionPane.showMessageDialog(null, String.format(
+			 "The csv file has been exported to %sqlDeclaration in the %sqlDeclaration database.",
+			 tableName, DB_NAME));
 		}
 		return count;
 	}
-	private JFrame uploadTableGUI(String[] headers) {
+	private JFrame uploadTableGUI(String[] headers, Scanner scanner) {
 		GridBagConstraints constraints = new GridBagConstraints();
 		GridBagLayout layout = new GridBagLayout();
 		
@@ -375,9 +381,9 @@ class CRUDBuddy {
 						typeMap.put(j, boxes[j].getSelectedItem() + "");
 					}
 					try {
-						batchLoadTable(tableName, headers, "inventory_team4.csv");
+						batchLoadTable(tableName, headers, "inventory_team4.csv", scanner);
 					}
-					catch(SQLException | ClassNotFoundException | FileNotFoundException throwables) {
+					catch(SQLException throwables) {
 						throwables.printStackTrace();
 					}
 					frame.setVisible(false);
@@ -421,41 +427,24 @@ class CRUDBuddy {
 	private static String getInsertionString(String[] array) {
 		
 		Object[] values = new Object[array.length];
-		String s = "(";
+		StringFormat sf = new StringFormat("(");
+		
 		for(int i = 0; i < values.length; i++) {
 			if(typeMap.get(i).contains("CHAR")) {
 				array[i] = "'" + array[i] + "'";
 			}
-			s += array[i] + (i == values.length - 1?")":",");
+			sf.append(array[i]);
+			if(i == values.length - 1) {
+				sf.append(")"); 
+			} else {
+				sf.append(",");
+			}
 		}
-		return s;
+		return sf.toString();
 	}
 	
+
 	/**
-	 * Formats the String to be sent as sql code
-	 *
-	 * @param tableName Name of the table to insert the
-	 *                  new row into
-	 * @param headers   the headers of each column
-	 * @param array     the values of each column
-	 * @param typeMap   the map describing which
-	 *                  type of
-	 *                  data each column is
-	 * @return sql String query to execute
-	 */
-	private static String getInsertionString(String tableName, String[] headers, String[] array,
-	 HashMap<Integer, Integer> typeMap) {
-		Object[] values = new Object[array.length];
-		for(int i = 0; i < typeMap.size(); i++) {
-			values[i] = formatValue(array[i]);
-		}
-		String s = "INSERT INTO " + tableName + getHeaders(headers) + ") VALUES (";
-		for(int i = 0; i < values.length; i++) {
-			s += getComma(values.length - 1, i, ")");
-		}
-		return s;
-	}
-		/**
 	 * create the tuple of headers as a String to be sent
 	 * as sql code
 	 *
@@ -463,13 +452,20 @@ class CRUDBuddy {
 	 * parentheses
 	 * i.e., (c1, c2,...cn)
 	 */
-	private static String getHeaders(String[] columnNames) {
-		String headers = "(";
-		for(String s: columnNames) {
-			headers += s + ",";
+	private static String getHeaderTuple(String[] columnNames) {
+		if(columnNames.length ==0) {
+			return null;
 		}
-		return headers.substring(0, headers.length() - 1);
+		
+		StringFormat sf = new StringFormat("(");
+		int i = 0;
+		for(; i < columnNames.length - 1; i++) {
+			sf.append(columnNames[i]).append(",");
+		}
+		
+		return sf.append(columnNames[i]).append(")").toString();
 	}
+	
 	public void loadTable(String fileName) {
 		try {
 			loadRemoteTable(fileName);
@@ -484,9 +480,9 @@ class CRUDBuddy {
 			//Todo: throw new FileNotSupportedException
 			return;
 		}
-		Scanner scanner = new Scanner(new File(filePath));
+		scanner = new Scanner(new File(filePath));
 		String[] headers = scanner.nextLine().split(",");
-		uploadTableGUI(headers);
+		uploadTableGUI(headers, scanner);
 	}
 	
 	
@@ -504,8 +500,8 @@ class CRUDBuddy {
 	 */
 	public int deleteRecord(String table, String idColumn, Object idValue) throws SQLException {
 		ArrayList<String> arrays = new ArrayList<>();
-		return connection.createStatement()
-		 .executeUpdate("DELETE FROM " + table + " WHERE " + idColumn + " = " + idValue);
+		return connection.createStatement().executeUpdate(
+		 "DELETE FROM " + table + " WHERE " + idColumn + " = " + idValue);
 	}
 	
 	/**
@@ -549,6 +545,13 @@ class CRUDBuddy {
 		return endingCharacter + "";
 	}
 	
+	private String getLastChar(boolean isLastIteration, String optionTrue, String optionFalse) {
+		if(isLastIteration) {
+			return optionTrue;
+		}
+		return optionFalse;
+	}
+	
 	/**
 	 * 
 	 * @param columnValue
@@ -568,14 +571,6 @@ class CRUDBuddy {
 		return "jdbc:mysql://" + HOST_IP + ":" + PORT + "/" + DB_NAME;
 	}
 	
-	
-	private static String columnNamesSQLString(String[] columnNames) {
-		String headers = "(";
-		for(String s: columnNames) {
-			headers += s + ",";
-		}
-		return headers.substring(0, headers.length() - 1);
-	}
 	
 	public static final int STRING = 1;
 	public static final int CHAR = 2;
