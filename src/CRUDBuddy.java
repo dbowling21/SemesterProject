@@ -24,7 +24,7 @@ class CRUDBuddy {
 	private static Connection connection;
 	private static String tableName;
 	private static Scanner scanner;
-	private static String[] headers;
+	private static String[] columnNames;
 	
 	/**
 	 * Class that facilitates a connection to a database, and carries out CRUD
@@ -38,11 +38,8 @@ class CRUDBuddy {
 	 * @throws SQLException
 	 * @throws ClassNotFoundException
 	 */
-	public CRUDBuddy(String userName,
-					 String passWord,
-					 String hostIP,
-					 String port,
-					 String schema)
+	public CRUDBuddy
+	(String userName, String passWord, String hostIP, String port, String schema)
 	throws SQLException, ClassNotFoundException {
 		
 		USER_NAME = userName;
@@ -59,17 +56,17 @@ class CRUDBuddy {
 	/**
 	 * Creates a blank Table
 	 *
-	 * @param tableName name of the table.
-	 * @param headers   String[] of tables.
-	 * @param typeMap   HashMap where each index in <code>headers</code> has the
-	 *                  string representation of its data type as the value
+	 * @param tableName   name of the table.
+	 * @param columnNames String[] of tables.
+	 * @param typeMap     HashMap where each index in <code>columnNames</code> has
+	 *                    the
+	 *                    string representation of its data type as the value
 	 * @return either (1) the row count for SQL Data Manipulation Language (DML)
 	 * statements or (2) 0 for SQL statements that return nothing
 	 * @throws SQLException if a database access error occurs
 	 */
-	public int createBlankTable(String tableName,
-								String[] headers,
-								HashMap<Integer, String> typeMap)
+	public int createBlankTable
+	(String tableName, String[] columnNames, HashMap<Integer, String> typeMap)
 	throws SQLException {
 		
 		deleteTable(tableName);
@@ -79,7 +76,7 @@ class CRUDBuddy {
 		
 		for(int i = 0; i < typeMap.size(); i++) {
 			sb.appendf(String.format("%s %s,",
-			 headers[i], typeMap.get(i)));
+			 columnNames[i], typeMap.get(i)));
 		}
 		sb.appendf(" PRIMARY KEY (%s));", PRIMARY_KEY.getKey());
 		return connection.createStatement()
@@ -117,9 +114,8 @@ class CRUDBuddy {
 	 * AS THE ARRAY 'columnNames' SO THEY MATCH UP!!!
 	 * //////////!!!!!!!!!!!!!!!!!!!!!!!!!\\\\\\\\\\\\
 	 */
-	public void createBlankTable(String tableName,
-								 String[] headers,
-								 LinkedList<Integer> columnTypes)
+	public void createBlankTable
+	(String tableName, String[] columnNames, LinkedList<Integer> columnTypes)
 	throws SQLException {
 		
 		deleteTable(tableName);
@@ -132,7 +128,7 @@ class CRUDBuddy {
 		Iterator<Integer> itr = columnTypes.iterator();
 		for(; itr.hasNext(); i++) {
 			Integer columnType = columnTypes.get(itr.next());
-			sf.appendf("%s %s, ", headers[i], columnType);
+			sf.appendf("%s %s, ", columnNames[i], columnType);
 		}
 		
 		sf.appendf(" PRIMARY KEY (%S));", PRIMARY_KEY.getKey());
@@ -148,8 +144,8 @@ class CRUDBuddy {
 	 * @return Arraylist of Strings for all column names in the specified table.
 	 * @throws SQLException
 	 */
-	public ArrayList<String> readColumnNames(String dbName,
-											 String tableName)
+	public ArrayList<String> readColumnNames
+	(String dbName, String tableName)
 	throws SQLException {
 		
 		StringFormat sf = new StringFormat(
@@ -158,12 +154,12 @@ class CRUDBuddy {
 		
 		ResultSet rs = connection.createStatement().executeQuery(sf.toString());
 		
-		ArrayList<String> headers = new ArrayList<>();
+		ArrayList<String> columnNames = new ArrayList<>();
 		
 		while(rs.next()) {
-			headers.add(rs.getString(1));
+			columnNames.add(rs.getString(1));
 		}
-		return headers;
+		return columnNames;
 	}
 	
 	/**
@@ -173,7 +169,8 @@ class CRUDBuddy {
 	 * @return
 	 * @throws SQLException
 	 */
-	public ResultSet readColumnTypes(String tableName)
+	public ResultSet readColumnTypes
+	(String tableName)
 	throws SQLException {
 		
 		StringFormat sf = new StringFormat(
@@ -193,15 +190,13 @@ class CRUDBuddy {
 	 * @param idValue      the unique value for the target record.
 	 * @return null if the columnNames array is null or empty. Otherwise, a Hashmap
 	 * of results
-	 * (HashMap<String, Object>). Each String is a column header, and each value is
+	 * (HashMap<String, Object>). Each String is a column name, and each value is
 	 * an Object of
 	 * whichever type is associated with the column.
 	 * @throws SQLException
 	 */
-	public HashMap<String, Object> readColumnValues(String tableName,
-													String[] columnNames,
-													String idValue,
-													String idColumnName)
+	public HashMap<String, Object> readColumnValues
+	(String tableName, String[] columnNames, String idValue, String idColumnName)
 	throws SQLException {
 		
 		if(columnNames.length == 0) {
@@ -229,13 +224,23 @@ class CRUDBuddy {
 	 * @return
 	 * @throws SQLException
 	 */
-	public ResultSet readAllRecords(String table) throws SQLException {
+	public ResultSet readAllRecords
+	(String table)
+	throws SQLException {
 		
 		return connection.createStatement().executeQuery("SELECT * FROM " + table);
 	}
 	
-	public File writeToFile(String path, ArrayList<String> columns,
-							ResultSet results)
+	/**
+	 * @param path
+	 * @param columns
+	 * @param results
+	 * @return
+	 * @throws FileNotFoundException
+	 * @throws SQLException
+	 */
+	public File writeToFile
+	(String path, ArrayList<String> columns, ResultSet results)
 	throws FileNotFoundException, SQLException {
 		
 		boolean isIndexed = PRIMARY_KEY.getKey().equals("idx");
@@ -275,7 +280,8 @@ class CRUDBuddy {
 	 * @param array the array to convert to a .csv format (typically column names)
 	 * @return the .csv line for <code>array</code>
 	 */
-	public String arrayToCSV(String[] array) {
+	public String arrayToCSV
+	(String[] array) {
 		
 		String a = Arrays.toString(array);
 		return a.substring(1, a.length() - 1);
@@ -287,7 +293,8 @@ class CRUDBuddy {
 	 * @param array the array to convert to a .csv format (typically column names)
 	 * @return the .csv line for <code>array</code>
 	 */
-	public String arrayToCSV(ArrayList<String> array) {
+	public String arrayToCSV
+	(ArrayList<String> array) {
 		
 		String a = array.toString();
 		return a.substring(1, a.length() - 1);
@@ -305,7 +312,7 @@ class CRUDBuddy {
 	 * @param isString     indicates which elements from <code>newValues</code>
 	 *                     need to be
 	 *                     wrapped in
-	 *                     in quotes. If newValues[start] is a represents SQL 
+	 *                     in quotes. If newValues[start] is a represents SQL
 	 *                     VARCHAR
 	 *                     type, then
 	 *                     isString[start] should be true. Otherwise, false.
@@ -316,13 +323,9 @@ class CRUDBuddy {
 	 * @return returnIntegers for the feedback received from MySQL
 	 * @throws SQLException
 	 */
-	public int[] updateRow(String tableName,
-						   String[] columnNames,
-						   String[] newValues,
-						   String idValue,
-						   String idColumnName,
-						   boolean[] isString,
-						   boolean idIsString)
+	public int[] updateRow
+	(String tableName, String[] columnNames, String[] newValues, String idValue,
+	 String idColumnName, boolean[] isString, boolean idIsString)
 	throws SQLException {
 		
 		idValue = quoteWrap(idValue, idIsString);
@@ -353,11 +356,9 @@ class CRUDBuddy {
 	 * @return
 	 * @throws SQLException
 	 */
-	public Object updateRow(String[] columns,
-							Object[] values,
-							Object id,
-							String tableName,
-							Connection conn)
+	public Object updateRow
+	(String[] columns, Object[] values, Object id, String tableName,
+	 Connection conn)
 	throws SQLException {
 		
 		StringFormat sf = new StringFormat("UPDATE %s SET ", tableName);
@@ -384,10 +385,8 @@ class CRUDBuddy {
 	 * @throws SQLException
 	 */
 	//TODO: actually use the fileName
-	private boolean upLoadTable(String tableName,
-								String[] columns,
-								String fileName,
-								Scanner scanner)
+	private boolean upLoadTable
+	(String tableName, String[] columns, String fileName, Scanner scanner)
 	throws SQLException {
 		
 		Statement statement = connection.createStatement();
@@ -395,7 +394,7 @@ class CRUDBuddy {
 			createBlankTable(tableName, columns, typeMap);
 			
 			StringFormat sf = new StringFormat("INSERT INTO %s %s)VALUES"
-			 , tableName, getHeaderTuple(columns));
+			 , tableName, getcolumnTuple(columns));
 			String sqlDeclaration = sf.toString();
 			
 			scanner.nextLine();
@@ -444,8 +443,7 @@ class CRUDBuddy {
 	 * @param scanner The Scanner passed on to this method has already read te
 	 *                first line and crated <code>columns</code> from it.
 	 */
-	private void guiUpload(String[] columns,
-						   Scanner scanner) {
+	private void guiUpload(String[] columns, Scanner scanner) {
 		
 		GridBagConstraints constraints = new GridBagConstraints();
 		GridBagLayout layout = new GridBagLayout();
@@ -600,13 +598,13 @@ class CRUDBuddy {
 	}
 	
 	/**
-	 * create the tuple of headers as a String to be sent
+	 * create the tuple of column names as a String to be sent
 	 * as sql code
 	 *
 	 * @return the column titles, comma separated, in
 	 * parentheses start.e., (c1, c2,...cn)
 	 */
-	private static String getHeaderTuple(String[] columnNames) {
+	private static String getcolumnTuple(String[] columnNames) {
 		
 		if(columnNames.length == 0) {
 			return null;
@@ -652,8 +650,8 @@ class CRUDBuddy {
 		}
 		
 		scanner = new Scanner(new File(filePath));
-		String[] headers = scanner.nextLine().split(",");
-		guiUpload(headers, scanner);
+		String[] columns = scanner.nextLine().split(",");
+		guiUpload(columns, scanner);
 	}
 	
 	/**
@@ -666,9 +664,8 @@ class CRUDBuddy {
 	 * statements, or 0 for SQL statements that return nothing
 	 * @throws SQLException database access errors
 	 */
-	public int deleteRecord(String table,
-							String idColumn,
-							Object idValue)
+	public int deleteRecord
+	(String table, String idColumn, Object idValue)
 	throws SQLException {
 		
 		ArrayList<String> arrays = new ArrayList<>();
@@ -706,7 +703,7 @@ class CRUDBuddy {
 	 * helper method to clean up code when concatenating commas for sql code.
 	 *
 	 * @param length   the length of the array to check against
-	 * @param lastChar    string to append to the end of a list of sql elements
+	 * @param lastChar string to append to the end of a list of sql elements
 	 *                 in a query.
 	 *                 (usually a
 	 *                 parentheses or empty string).
@@ -715,9 +712,7 @@ class CRUDBuddy {
 	 * (as calculated
 	 * by <code>length</code>, or the ending character
 	 */
-	private static String getComma(int length,
-								   int i,
-								   String lastChar) {
+	private static String getComma(int length, int i, String lastChar) {
 		
 		if(i < length - 1) {
 			return ", ";
@@ -751,8 +746,7 @@ class CRUDBuddy {
 	 * @return a new string with quotes around it, if the <code>value</code>
 	 * actually represents a String. Otherwise, the original string.
 	 */
-	public String quoteWrap(String value,
-							boolean isString) {
+	public String quoteWrap(String value, boolean isString) {
 		
 		if(isString) {
 			return "'" + value + "'";
