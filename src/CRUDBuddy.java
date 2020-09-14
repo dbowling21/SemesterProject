@@ -1,5 +1,6 @@
 import com.mysql.cj.MysqlType;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -7,9 +8,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.sql.*;
-import java.util.*;
 import java.util.List;
-import javax.swing.*;
+import java.util.*;
 
 import static java.util.Map.entry;
 
@@ -786,6 +786,20 @@ class CRUDBuddy {
 		}
 		return value;
 	}
+
+	public ArrayList<String> getTables() throws SQLException {
+
+		ResultSet rs = connection.createStatement().executeQuery("SHOW tables");
+
+		ArrayList<String> tables = new ArrayList<String>();
+
+		while(rs.next()){
+			tables.add(rs.getString(1));
+		}
+		return tables;
+
+	}
+
 	
 	/**
 	 * get the URL by joining static variable together.
