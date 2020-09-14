@@ -16,6 +16,7 @@ import static java.util.Map.entry;
 class CRUDBuddy {
 	private static Pair<String, String> PRIMARY_KEY = new Pair("idx", "int(16)");
 	private static String HOST_IP;
+	public static final String UTF8_BOM = "\uFEFF";
 	private static String PORT;
 	private static String DB_NAME;
 	private static HashMap<Integer, String> typeMap;
@@ -71,13 +72,14 @@ class CRUDBuddy {
 		
 		deleteTable(tableName);
 		StringFormat sb = new StringFormat(
-		 "CREATE TABLE %s(%s %s NOT NULL AUTO_INCREMENT,",
-		 tableName, PRIMARY_KEY.getKey(), PRIMARY_KEY.getValue());
+		 "CREATE TABLE %s(%s %s NOT NULL AUTO_INCREMENT,".trim(),
+		 tableName.trim(), PRIMARY_KEY.getKey().trim(),
+		 PRIMARY_KEY.getValue().trim());
 		
 		int i = 0;
 		for(; i < typeMap.size(); i++) {
 			sb.appendf(String.format("%s %s,",
-			 columnNames[i], typeMap.get(i)));
+			 columnNames[i].trim(), typeMap.get(i).trim()));
 		}
 		sb.appendf(" PRIMARY KEY (%s));", PRIMARY_KEY.getKey());
 		return connection.createStatement()
@@ -409,7 +411,7 @@ class CRUDBuddy {
 		if(typeMap != null) {
 			createBlankTable(tableName, columns, typeMap);
 			
-			StringFormat sf = new StringFormat("INSERT INTO %s %s)VALUES"
+			StringFormat sf = new StringFormat("INSERT INTO %s %sVALUES"
 			 , tableName, getcolumnTuple(columns));
 			String sqlDeclaration = sf.toString();
 			
@@ -529,8 +531,8 @@ class CRUDBuddy {
 			   0 /*&& fileField.getText().length() > 0*/) {
 				//Todo: create fileField to get fileName
 				
-				String tableName = nameField.getText();
-				String fileName = fileField.getText();
+				String tableName = nameField.getText().trim();
+				String fileName = fileField.getText().trim();
 				Enumeration<AbstractButton> bs = buttonGroup.getElements();
 				boolean foundButton = false;
 				for(int j = 0; j < radioButtons.length - 1; j++) {
@@ -541,12 +543,12 @@ class CRUDBuddy {
 					}
 				}
 				if(!foundButton) {
-					PRIMARY_KEY.setValue("idx");
-					PRIMARY_KEY.setValue("int(16)");
+					PRIMARY_KEY.setValue("idx".trim());
+					PRIMARY_KEY.setValue("int(16)".trim());
 				}
 				typeMap = new HashMap<>();
 				for(int j = 0; j < boxes.length; j++) {
-					typeMap.put(j, boxes[j].getSelectedItem() + "");
+					typeMap.put(j, (boxes[j].getSelectedItem() + "").trim());
 				}
 				try {
 					upLoadTable(tableName, columns, "inventory_team4.csv",
@@ -667,7 +669,22 @@ class CRUDBuddy {
 		
 		scanner = new Scanner(new File(filePath));
 		String[] columns = scanner.nextLine().split(",");
+		columns[0] = removeUTF8BOM(columns[0]);
 		guiUpload(columns, scanner);
+	}
+	
+	/**
+	 * Removes the (BOM byte-order mark) from the beginning of the string.
+	 * @param s the first string of the file
+	 * @return the original string if there is no byte mark. otherwise a substring
+	 * with the byte mark removed
+	 */
+	private static String removeUTF8BOM(String s) {
+		
+		if(s.startsWith("\uFEFF")) {
+			s = s.substring(1);
+		}
+		return s;	
 	}
 	
 	/**
@@ -838,6 +855,7 @@ class CRUDBuddy {
 	  entry("DATE", "DATE"),
 	  entry("TIME", "TIME"),
 	  entry("TIMESTAMP", "TIMESTAMP"));
+	
 	/**
 	 * tester method
 	 *
@@ -850,7 +868,12 @@ class CRUDBuddy {
 		return connection.createStatement().executeQuery(query);
 	}
 	
+	/**
+	 * @param name
+	 * @return
+	 */
 	public String getType(String name) {
+		
 		return J_TO_SQL2.get(name);
 	}
 }

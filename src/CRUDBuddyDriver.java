@@ -2,8 +2,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class CRUDBuddyDriver {
-	static String userName = "";
-	static String password = "";
+	static String userName = "GalacticWafer";
+	static String password = "7!qaJ|B[t$";
 	static String ipAddress = "45.79.55.190";
 	static String portNumber = "3306";
 	static String databaseName = "cs3250_project";
