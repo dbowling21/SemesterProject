@@ -36,6 +36,17 @@ class CRUDBuddyTest extends JPanel {
 	throws SQLException, ClassNotFoundException {
 		
 	}
+
+	@Test void assertTables() throws SQLException {
+
+		ArrayList<String> list = new ArrayList<>();
+		list.add("customers");
+		list.add("inventory");
+		list.add("sales");
+		assertEquals(list, crud.getTables());
+
+
+	}
 	
 	@Test void assertTableCreatedTest()
 	throws SQLException, FileNotFoundException {
