@@ -1,3 +1,5 @@
+import com.mysql.cj.MysqlType;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,7 +15,6 @@ import static java.util.Map.entry;
 
 class CRUDBuddy {
 	private static Pair<String, String> PRIMARY_KEY = new Pair("idx", "int(16)");
-	private static Pair<String, String> USER_AND_PASS;
 	private static String HOST_IP;
 	private static String PORT;
 	private static String DB_NAME;
@@ -59,8 +60,7 @@ class CRUDBuddy {
 	 * @param tableName   name of the table.
 	 * @param columnNames String[] of tables.
 	 * @param typeMap     HashMap where each index in <code>columnNames</code> has
-	 *                    the
-	 *                    string representation of its data type as the value
+	 *                    the string representation of its data type as the value
 	 * @return either (1) the row count for SQL Data Manipulation Language (DML)
 	 * statements or (2) 0 for SQL statements that return nothing
 	 * @throws SQLException if a database access error occurs
@@ -71,10 +71,11 @@ class CRUDBuddy {
 		
 		deleteTable(tableName);
 		StringFormat sb = new StringFormat(
-		 "CREATE TABLE %s(%s %s) NOT NULL AUTO_INCREMENT,",
+		 "CREATE TABLE %s(%s %s NOT NULL AUTO_INCREMENT,",
 		 tableName, PRIMARY_KEY.getKey(), PRIMARY_KEY.getValue());
 		
-		for(int i = 0; i < typeMap.size(); i++) {
+		int i = 0;
+		for(; i < typeMap.size(); i++) {
 			sb.appendf(String.format("%s %s,",
 			 columnNames[i], typeMap.get(i)));
 		}
@@ -149,9 +150,9 @@ class CRUDBuddy {
 	throws SQLException {
 		
 		StringFormat sf = new StringFormat(
+		 //"Describe %s;",  tableName);
 		 "SELECT `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`COLUMNS`" +
 		 " WHERE `TABLE_SCHEMA`='%s' AND `TABLE_NAME`='%s'", dbName, tableName);
-		
 		ResultSet rs = connection.createStatement().executeQuery(sf.toString());
 		
 		ArrayList<String> columnNames = new ArrayList<>();
@@ -166,17 +167,32 @@ class CRUDBuddy {
 	 * Gets an arrayList of column types from a table
 	 *
 	 * @param tableName name of the target table
-	 * @return
+	 * @return an ArrayList of column types, as their SQL string alias
 	 * @throws SQLException
 	 */
-	public ResultSet readColumnTypes
+	public ArrayList<String> readColumnTypes
 	(String tableName)
 	throws SQLException {
 		
-		StringFormat sf = new StringFormat(
-		 "SELECT DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = %s " +
-		 "AND COLUMN_NAME = 'product_id'", tableName);
-		return connection.createStatement().executeQuery(sf.toString());
+		ArrayList<String> arr = new ArrayList<>();
+		ResultSet rs = connection.createStatement().executeQuery(
+		 "select * from " + tableName + " where 1<0");
+		
+		ResultSetMetaData md = rs.getMetaData();
+		
+		boolean firstIsIndex = md.isAutoIncrement(1);
+		int dataColumnCount = firstIsIndex?md.getColumnCount() - 1:
+		 md.getColumnCount();
+		
+		String[] columnTypes = new String[dataColumnCount];
+		
+		for(int i = 0; i < md.getColumnCount(); i++) {
+			if(!md.isAutoIncrement(i + 1)) {
+				arr.add(MysqlType.getByJdbcType(md.getColumnType(i)) + "");
+			}
+		}
+		
+		return arr;
 	}
 	
 	/**
@@ -787,7 +803,7 @@ class CRUDBuddy {
 	public static final int ARRAY = 20;
 	public static final int REF = 21;
 	public static final int STRUCT = 22;
-	private static final Map<Integer, String> J_TO_SQL = Map
+	public static final Map<Integer, String> J_TO_SQL = Map
 	 .ofEntries(entry(
 	  STRING, "VARCHAR(16)"),
 	  entry(CHAR, "CHAR"),
@@ -811,7 +827,17 @@ class CRUDBuddy {
 	  entry(ARRAY, "ARRAY"),
 	  entry(REF, "REF"),
 	  entry(STRUCT, "STRUCT"));
-	
+	public static final Map<String, String> J_TO_SQL2 = Map
+	 .ofEntries(entry(
+	  "VARCHAR", "VARCHAR(16)"),
+	  entry("CHAR", "CHAR"),
+	  entry("LONGVARCHAR", "VARCHAR(32)"),
+	  entry("BOOLBIT", "BIT"),
+	  entry("INT", "int(8)"),
+	  entry("DOUBLE", "decimal(13,2)"),
+	  entry("DATE", "DATE"),
+	  entry("TIME", "TIME"),
+	  entry("TIMESTAMP", "TIMESTAMP"));
 	/**
 	 * tester method
 	 *
@@ -822,6 +848,10 @@ class CRUDBuddy {
 	public ResultSet query(String query) throws SQLException {
 		
 		return connection.createStatement().executeQuery(query);
+	}
+	
+	public String getType(String name) {
+		return J_TO_SQL2.get(name);
 	}
 }
 	
