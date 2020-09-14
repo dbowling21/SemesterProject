@@ -11,25 +11,32 @@ import java.sql.SQLException;
 import java.util.*;
 
 class CRUDBuddyTest extends JPanel {
-	JTable jTable;
-	JScrollPane scrollPane;
+	public static final JFrame JF_1 = new JFrame();
+	static JTable jTable;
+	static JScrollPane scrollPane;
 	static String userName = "GalacticWafer";
 	static String password = "7!qaJ|B[t$";
 	static String ipAddress = "45.79.55.190";
 	static String portNumber = "3306";
 	static String databaseName = "cs3250_project";
 	static String tableName = "wtf_hammad_make_it_work";
-	// CRUDBuddy instance variable
+	
 	private CRUDBuddy crud =
 	 new CRUDBuddy(userName, password, ipAddress, portNumber, databaseName);
 	
-	CRUDBuddyTest() throws SQLException, ClassNotFoundException {
+	public static void main(String[] args)
+	throws SQLException, ClassNotFoundException {
+		
+		startTableViewer();
+	}
+	
+	CRUDBuddyTest() 
+	throws SQLException, ClassNotFoundException {
 		
 	}
 	
-	@Test void assertWriteFileFromTable() throws SQLException,
-												 FileNotFoundException {
-		 
+	@Test void assertWriteFileFromTable() 
+	throws SQLException, FileNotFoundException {
 		
 		ArrayList<String> columns = crud.readColumnNames(databaseName, tableName);
 		ResultSet results = crud.readAllRecords(tableName);
@@ -38,9 +45,10 @@ class CRUDBuddyTest extends JPanel {
 		while(sc.hasNextLine()) {
 			System.out.println(sc.nextLine());
 		}
-	}
+	}	
 	
-	@Test void assertReadAndUpdate() throws SQLException, ClassNotFoundException {
+	@Test void assertReadAndUpdate() 
+	throws SQLException {
 		// row identity information
 		String identifierColumn = "product_id";
 		String identifierValue = "ZRDATK9CSM23";
@@ -138,22 +146,20 @@ class CRUDBuddyTest extends JPanel {
 		add(scrollPane);
 	}
 	
-	public static void main(String[] args)
+	public static void startTableViewer()
 	throws SQLException, ClassNotFoundException {
-		
-		JFrame jf = new JFrame();
 		
 		CRUDBuddyTest t = new CRUDBuddyTest();
 		t.assertTableViewerGiuIsOk();
-		jf.setTitle("Test");
+		JF_1.setTitle("Test");
 		Dimension onlySize = new Dimension(
 		 t.scrollPane.getPreferredSize().width + 50,
 		 t.scrollPane.getPreferredSize().height + 50);
-		jf.setMinimumSize(onlySize);
-		jf.setMaximumSize(onlySize);
-		jf.setVisible(true);
-		jf.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		jf.add(t);
+		JF_1.setMinimumSize(onlySize);
+		JF_1.setMaximumSize(onlySize);
+		JF_1.setVisible(true);
+		JF_1.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		JF_1.add(t);
 	}
 	
 	private class ColumnColorRenderer extends DefaultTableCellRenderer {
