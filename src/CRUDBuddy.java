@@ -2,8 +2,6 @@ import com.mysql.cj.MysqlType;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -14,19 +12,19 @@ import java.util.*;
 import static java.util.Map.entry;
 
 class CRUDBuddy {
-	private static Pair<String, String> PRIMARY_KEY = new Pair("idx", "int(16)");
+	public static boolean IS_AUTO_INCREMENT;
+	private static Pair<String, String> PRIMARY_KEY
+	 = new Pair("product_id", "VARCHAR(12)");
 	private static String HOST_IP;
-	public static final String UTF8_BOM = "\uFEFF";
 	private static String PORT;
 	private static String DB_NAME;
 	private static HashMap<Integer, String> typeMap;
 	private static String USER_NAME;
 	private static String PASSWORD;
-	private static HashMap<String, String[]> tables;
 	private static Connection connection;
 	private static String tableName;
 	private static Scanner scanner;
-	private static String[] columnNames;
+	private TableViewer tv;
 	
 	/**
 	 * Class that facilitates a connection to a database, and carries out CRUD
@@ -49,10 +47,20 @@ class CRUDBuddy {
 		HOST_IP = hostIP;
 		PORT = port;
 		DB_NAME = schema;
-		tables = new HashMap<>();
 		Class.forName("com.mysql.cj.jdbc.Driver");
-		connection = DriverManager.getConnection(getURL(), userName, passWord);
+		connection = getConnection();
 		JOptionPane.showMessageDialog(null, "Connection OK with " + getURL());
+	}
+	
+	/**
+	 * 
+	 * @return
+	 * @throws SQLException
+	 */
+	public Connection getConnection()
+	throws SQLException {
+		
+		return DriverManager.getConnection(getURL(), USER_NAME, PASSWORD);
 	}
 	
 	/**
@@ -72,18 +80,32 @@ class CRUDBuddy {
 		
 		deleteTable(tableName);
 		StringFormat sb = new StringFormat(
-		 "CREATE TABLE %s(%s %s NOT NULL AUTO_INCREMENT,".trim(),
-		 tableName.trim(), PRIMARY_KEY.getKey().trim(),
-		 PRIMARY_KEY.getValue().trim());
+		 "CREATE TABLE %s(%s %s NOT NULL%s,",
+		 tableName, PRIMARY_KEY.getKey(),
+		 PRIMARY_KEY.getValue(), getAutoIncrement());
 		
 		int i = 0;
 		for(; i < typeMap.size(); i++) {
-			sb.appendf(String.format("%s %s,",
-			 columnNames[i].trim(), typeMap.get(i).trim()));
+			String str = String.format("%s %s,",
+			 columnNames[i], typeMap.get(i));
+			
+			String primaryString = String.format("%s %s,",
+			 PRIMARY_KEY.getKey() , PRIMARY_KEY.getValue());
+			
+			if(!str.equals(primaryString))
+			sb.appendf(str);
 		}
 		sb.appendf(" PRIMARY KEY (%s));", PRIMARY_KEY.getKey());
 		return connection.createStatement()
 						 .executeUpdate(sb.toString());
+	}
+	
+	private String getAutoIncrement() {
+		
+		if(IS_AUTO_INCREMENT) {
+			return " AUTO_INCREMENT";
+		}
+		return "";
 	}
 	
 	/**
@@ -178,7 +200,7 @@ class CRUDBuddy {
 		
 		ArrayList<String> arr = new ArrayList<>();
 		ResultSet rs = connection.createStatement().executeQuery(
-		 "select * from " + tableName + " where 1<0");
+		 "select * from " + tableName + " where 1 < 0");
 		
 		ResultSetMetaData md = rs.getMetaData();
 		
@@ -386,11 +408,10 @@ class CRUDBuddy {
 			String value = quoteWrap(values[i]);
 			String comma = getComma(columns.length, i, "");
 			
-			sf.appendf("%s = %s%s", column, value, comma);
+			sf.appendf("%s = '%s'%s", column, value, comma);
 		}
 		
-		String idx = quoteWrap(id);
-		sf.appendf(" where %s=%s", PRIMARY_KEY, idx);
+		sf.appendf(" where %s='%s'", PRIMARY_KEY.getKey(), PRIMARY_KEY.getValue());
 		
 		return conn.createStatement().executeUpdate(sf + "");
 	}
@@ -422,17 +443,12 @@ class CRUDBuddy {
 				
 				String[] line = scanner.nextLine().split(",");
 				String nextInsertion = getInsertionString(line);
-				boolean isLastIteration = i == MAX_LOOPS - 1;
+				boolean isLastOfBatch = i == MAX_LOOPS - 1;
 				sf.append(nextInsertion);
 				
-				if(i == MAX_LOOPS - 1) {
-					sf.append(";");
-				}
-				else {
-					sf.append(",");
-				}
-				
-				if(isLastIteration) {
+				sf.append(i == MAX_LOOPS - 1 ? ";" : ",");
+
+				if(isLastOfBatch) {
 					statement.executeUpdate(sf.toString());
 					i = 0;
 					sf.setLength(0);
@@ -531,28 +547,30 @@ class CRUDBuddy {
 			   0 /*&& fileField.getText().length() > 0*/) {
 				//Todo: create fileField to get fileName
 				
-				String tableName = nameField.getText().trim();
-				String fileName = fileField.getText().trim();
+				tableName = nameField.getText();
+				String fileName = fileField.getText();
 				Enumeration<AbstractButton> bs = buttonGroup.getElements();
-				boolean foundButton = false;
+				boolean IS_AUTO_INCREMENT = false;
 				for(int j = 0; j < radioButtons.length - 1; j++) {
 					JRadioButton radioButton = (JRadioButton)bs.nextElement();
 					if(radioButton.isSelected() && bs.hasMoreElements()) {
-						PRIMARY_KEY.setValue(J_TO_SQL.get(j));
-						foundButton = true;
+						PRIMARY_KEY.setKey(labels[j].getText());
+						PRIMARY_KEY.setValue(boxes[j].getSelectedItem().toString());
+						IS_AUTO_INCREMENT = true;
+						break;
 					}
 				}
-				if(!foundButton) {
-					PRIMARY_KEY.setValue("idx".trim());
-					PRIMARY_KEY.setValue("int(16)".trim());
+				if(!IS_AUTO_INCREMENT) {
+					PRIMARY_KEY.setKey("idx");
+					PRIMARY_KEY.setValue("int(16)");
 				}
 				typeMap = new HashMap<>();
 				for(int j = 0; j < boxes.length; j++) {
-					typeMap.put(j, (boxes[j].getSelectedItem() + "").trim());
+					typeMap.put(j, (boxes[j].getSelectedItem() + ""));
 				}
 				try {
-					upLoadTable(tableName, columns, "inventory_team4.csv",
-					 scanner);
+					upLoadTable(tableName, columns, "inventory_team4.csv", scanner);
+					showTableViewer();
 				}
 				catch(SQLException throwables) {
 					throwables.printStackTrace();
@@ -567,12 +585,10 @@ class CRUDBuddy {
 		JButton cancel = new JButton("Cancel");
 		Dimension dim = frame.getContentPane().getPreferredSize();
 		scrollPane.setMaximumSize(new Dimension(dim.width - 1, dim.height - 1));
-		cancel.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
-				
-				frame.remove(panel);
-				frame.setVisible(false);
-			}
+		cancel.addActionListener(e->{
+			
+			frame.remove(panel);
+			frame.setVisible(false);
 		});
 		panel.add(cancel, constraints);
 		scrollPane.getViewport().add(panel);
@@ -601,16 +617,12 @@ class CRUDBuddy {
 		StringFormat sf = new StringFormat("(");
 		
 		for(int i = 0; i < values.length; i++) {
-			if(typeMap.get(i).contains("CHAR")) {
-				array[i] = "'" + array[i] + "'";
-			}
-			sf.append(array[i]);
-			if(i == values.length - 1) {
-				sf.append(")");
-			}
-			else {
-				sf.append(",");
-			}
+			sf.append(
+			 typeMap.get(i).contains("CHAR")?
+			  quoteWrap(array[i]) : array[i]);
+			
+			sf.append(i == values.length - 1?
+			 ")":",");
 		}
 		return sf.toString();
 	}
@@ -671,20 +683,6 @@ class CRUDBuddy {
 		String[] columns = scanner.nextLine().split(",");
 		columns[0] = removeUTF8BOM(columns[0]);
 		guiUpload(columns, scanner);
-	}
-	
-	/**
-	 * Removes the (BOM byte-order mark) from the beginning of the string.
-	 * @param s the first string of the file
-	 * @return the original string if there is no byte mark. otherwise a substring
-	 * with the byte mark removed
-	 */
-	private static String removeUTF8BOM(String s) {
-		
-		if(s.startsWith("\uFEFF")) {
-			s = s.substring(1);
-		}
-		return s;	
 	}
 	
 	/**
@@ -786,20 +784,34 @@ class CRUDBuddy {
 		}
 		return value;
 	}
-
-	public ArrayList<String> getTables() throws SQLException {
-
+	
+	/**
+	 * Removes the (BOM byte-order mark) from the beginning of the string.
+	 *
+	 * @param s the first string of the file
+	 * @return the original string if there is no byte mark. otherwise a
+	 * substring
+	 * with the byte mark removed
+	 */
+	private static String removeUTF8BOM(String s) {
+		
+		if(s.startsWith("\uFEFF")) {
+			s = s.substring(1);
+		}
+		return s;
+	}
+	
+	public ArrayList<String> getTableNames() throws SQLException {
+		
 		ResultSet rs = connection.createStatement().executeQuery("SHOW tables");
-
-		ArrayList<String> tables = new ArrayList<String>();
-
-		while(rs.next()){
+		
+		ArrayList<String> tables = new ArrayList<>();
+		
+		while(rs.next()) {
 			tables.add(rs.getString(1));
 		}
 		return tables;
-
 	}
-
 	
 	/**
 	 * get the URL by joining static variable together.
@@ -834,9 +846,9 @@ class CRUDBuddy {
 	public static final int ARRAY = 20;
 	public static final int REF = 21;
 	public static final int STRUCT = 22;
-	public static final Map<Integer, String> J_TO_SQL = Map
-	 .ofEntries(entry(
-	  STRING, "VARCHAR(16)"),
+	public static final
+	Map<Integer, String> J_TO_SQL =  Map.ofEntries(
+	  entry(STRING, "VARCHAR(16)"),
 	  entry(CHAR, "CHAR"),
 	  entry(LONGVARCHAR, "VARCHAR(32)"),
 	  entry(BOOLBIT, "BIT"),
@@ -889,6 +901,19 @@ class CRUDBuddy {
 	public String getType(String name) {
 		
 		return J_TO_SQL2.get(name);
+	}
+	
+	public void setTableViewer(TableViewer tv) {
+		
+		this.tv = tv;
+	}
+	
+	public void showTableViewer()
+	throws SQLException {
+		
+		tv.setGui(DB_NAME, tableName);
+		tv.setVisible(true);
+		tv.setLocationRelativeTo(null);
 	}
 }
 	
