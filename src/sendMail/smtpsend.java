@@ -2,6 +2,7 @@ import java.io.*;
 import java.net.InetAddress;
 import java.util.Properties;
 import java.util.Date;
+import javax.mail.internet.*;
 
 import javax.mail.*;
 import javax.mail.internet.*;
@@ -20,6 +21,7 @@ import com.sun.mail.smtp.*;
  * @author Max Spivak
  * @author Bill Shannon
  */
+
 
 public class smtpsend {
 
@@ -338,3 +340,4 @@ public class smtpsend {
         return sb.toString();
     }
 }
+
