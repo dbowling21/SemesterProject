@@ -248,6 +248,7 @@ class CRUDBuddy {
 		
 		return connection.createStatement().executeQuery("SELECT * FROM " + table);
 	}
+
 	
 	/**
 	 * @param path
