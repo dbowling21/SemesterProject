@@ -26,9 +26,9 @@ public class CRUDBuddyDriver {
 
 	}
 
-	public readTable(String table){
+	//public readTable(String table){
 
-	}
+	//}
 	
 	private static void testReadColNames(CRUDBuddy crud) throws SQLException {
 		ArrayList<String> headers = crud.readColumnNames("cs3250_project", "test");
