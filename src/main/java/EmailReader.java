@@ -20,7 +20,7 @@ public class EmailReader {
         inbox.open(Folder.READ_ONLY);
         Message messages[] = inbox.getMessages();
             for(Message message : messages) {
-                System.out.println(message.getSubject());
+                System.out.println(message.getContent());
             }
         } catch (MessagingException e){
             e.printStackTrace();
