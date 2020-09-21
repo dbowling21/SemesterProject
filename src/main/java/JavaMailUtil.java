@@ -37,8 +37,8 @@ public class JavaMailUtil {
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(myAccountEmail));
             message.setRecipient(Message.RecipientType.TO, new InternetAddress(recepient));
-            message.setSubject("My first pp");
-            message.setText("pp butt");
+            message.setSubject("Testing");
+            message.setText("Testing Content");
             return message;
         } catch (Exception ex){
             Logger.getLogger(JavaMailUtil.class.getName()).log(Level.SEVERE, null, ex);
