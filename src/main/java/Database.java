@@ -95,7 +95,7 @@ public class Database {
 
 
 	/**
-	 * Create a new table an empty Table, and call the other createTable(Table newTable)
+	 * Create a new table an empty Table, and call the other createBlankTable(Table newTable)
 	 * method to do it.
 	 *
 	 * @param name unique name of the table
@@ -107,7 +107,7 @@ public class Database {
 	
 	/**
 	 * Create a new table an filled Table with the specified file, and call 
-	 * the createTable(Table newTable) method to do it.
+	 * the createBlankTable(Table newTable) method to do it.
 	 *
 	 * @param tableName unique name of the table
 	 * @return null if the table name is not taken. otherwise, the old Table
