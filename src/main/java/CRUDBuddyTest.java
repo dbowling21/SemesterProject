@@ -23,12 +23,14 @@ class CRUDBuddyTest extends JPanel {
 	static String ipAddress = "45.79.55.190";
 	static String portNumber = "3306";
 	static String databaseName = "cs3250_project";
-	static String tableName = "inventory";
+	static String tableName = "inventory_team4";
 	private CRUDBuddy crud =
 	 new CRUDBuddy(userName, password, ipAddress, portNumber, databaseName);
 	
 	public static void main(String[] args)
 	throws SQLException, ClassNotFoundException {
+
+		assertTableViewerGiuTest();
 		
 	}
 	
@@ -72,9 +74,9 @@ class CRUDBuddyTest extends JPanel {
 		correctList.add("idx");
 		correctList.add("product_id");
 		correctList.add("quantity");
-		correctList.add("wholesale_cost");
 		correctList.add("sale_price");
 		correctList.add("supplier_id");
+		correctList.add("wholesale_cost");
 		
 		ArrayList<String> columnNames =
 		 crud.readColumnNames(databaseName, tableName);
@@ -152,7 +154,7 @@ class CRUDBuddyTest extends JPanel {
 		crud.upLoadTable("inventory_team4.csv");
 	}
 	
-	@Test public void assertTableViewerGiuTest()
+	@Test public static void assertTableViewerGiuTest()
 	throws SQLException, ClassNotFoundException {
 		
 		CRUDBuddyTest t = new CRUDBuddyTest();
@@ -205,7 +207,7 @@ class CRUDBuddyTest extends JPanel {
 		
 		scrollPane.setMinimumSize(tf.getScrollPanelSize());
 		scrollPane.setPreferredSize(tf.getScrollPanelSize());
-		add(scrollPane);
+		JF_1.add(scrollPane);
 		
 		JF_1.setTitle("Test");
 		Dimension onlySize = new Dimension(
